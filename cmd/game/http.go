@@ -6,7 +6,9 @@ import (
 	front "game-service/gen/front"
 	charactersvr "game-service/gen/http/character/server"
 	frontsvr "game-service/gen/http/front/server"
+	inventorysvr "game-service/gen/http/inventory/server"
 	itemsvr "game-service/gen/http/item/server"
+	inventory "game-service/gen/inventory"
 	item "game-service/gen/item"
 	"log"
 	"net/http"
@@ -22,7 +24,7 @@ import (
 
 // handleHTTPServer starts configures and starts a HTTP server on the given
 // URL. It shuts down the server if any error is received in the error channel.
-func handleHTTPServer(ctx context.Context, u *url.URL, frontEndpoints *front.Endpoints, itemEndpoints *item.Endpoints, characterEndpoints *character.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
+func handleHTTPServer(ctx context.Context, u *url.URL, characterEndpoints *character.Endpoints, inventoryEndpoints *inventory.Endpoints, frontEndpoints *front.Endpoints, itemEndpoints *item.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
 
 	// Setup goa log adapter.
 	var (
@@ -53,28 +55,32 @@ func handleHTTPServer(ctx context.Context, u *url.URL, frontEndpoints *front.End
 	// the service input and output data structures to HTTP requests and
 	// responses.
 	var (
+		characterServer *charactersvr.Server
+		inventoryServer *inventorysvr.Server
 		frontServer     *frontsvr.Server
 		itemServer      *itemsvr.Server
-		characterServer *charactersvr.Server
 	)
 	{
 		eh := errorHandler(logger)
+		characterServer = charactersvr.New(characterEndpoints, mux, dec, enc, eh, nil)
+		inventoryServer = inventorysvr.New(inventoryEndpoints, mux, dec, enc, eh, nil)
 		frontServer = frontsvr.New(frontEndpoints, mux, dec, enc, eh, nil)
 		itemServer = itemsvr.New(itemEndpoints, mux, dec, enc, eh, nil)
-		characterServer = charactersvr.New(characterEndpoints, mux, dec, enc, eh, nil)
 		if debug {
 			servers := goahttp.Servers{
+				characterServer,
+				inventoryServer,
 				frontServer,
 				itemServer,
-				characterServer,
 			}
 			servers.Use(httpmdlwr.Debug(mux, os.Stdout))
 		}
 	}
 	// Configure the mux.
+	charactersvr.Mount(mux, characterServer)
+	inventorysvr.Mount(mux, inventoryServer)
 	frontsvr.Mount(mux, frontServer)
 	itemsvr.Mount(mux, itemServer)
-	charactersvr.Mount(mux, characterServer)
 
 	// Wrap the multiplexer with additional middlewares. Middlewares mounted
 	// here apply to all the service endpoints.
@@ -87,13 +93,16 @@ func handleHTTPServer(ctx context.Context, u *url.URL, frontEndpoints *front.End
 	// Start HTTP server using default configuration, change the code to
 	// configure the server as required by your service.
 	srv := &http.Server{Addr: u.Host, Handler: handler, ReadHeaderTimeout: time.Second * 60}
+	for _, m := range characterServer.Mounts {
+		logger.Printf("HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
+	}
+	for _, m := range inventoryServer.Mounts {
+		logger.Printf("HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
+	}
 	for _, m := range frontServer.Mounts {
 		logger.Printf("HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
 	}
 	for _, m := range itemServer.Mounts {
-		logger.Printf("HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
-	}
-	for _, m := range characterServer.Mounts {
 		logger.Printf("HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
 	}
 

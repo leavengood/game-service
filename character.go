@@ -9,8 +9,7 @@ import (
 	character "game-service/gen/character"
 )
 
-// character service example implementation.
-// The example methods log the requests and return zero values.
+// charactersrvc manages a list of characters, using a map instead of a slice
 type charactersrvc struct {
 	logger     *log.Logger
 	characters map[string]*character.StoredCharacter
@@ -22,14 +21,14 @@ func NewCharacter(logger *log.Logger) character.Service {
 		{
 			ID:          uuid.NewString(),
 			Name:        "Gordax the Orc",
-			Description: stringPtr("A grumpy old orc with a missing eye and golden tusks"),
+			Description: stringToPointer("A grumpy old orc with a missing eye and golden tusks"),
 			Health:      1534,
 			Experience:  43981,
 		},
 		{
 			ID:          uuid.NewString(),
 			Name:        "Silva De Mort",
-			Description: stringPtr("A human thief adept at camouflage and stealth"),
+			Description: stringToPointer("A human thief adept at camouflage and stealth"),
 			Health:      671,
 			Experience:  17398,
 		},
@@ -42,10 +41,6 @@ func NewCharacter(logger *log.Logger) character.Service {
 			startingCharacters[1].ID: startingCharacters[1],
 		},
 	}
-}
-
-func stringPtr(s string) *string {
-	return &s
 }
 
 // List all characters

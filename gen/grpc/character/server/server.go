@@ -103,6 +103,15 @@ func (s *Server) Add(ctx context.Context, message *characterpb.AddRequest) (*cha
 	ctx = context.WithValue(ctx, goa.ServiceKey, "character")
 	resp, err := s.AddH.Handle(ctx, message)
 	if err != nil {
+		var en goa.GoaErrorNamer
+		if errors.As(err, &en) {
+			switch en.GoaErrorName() {
+			case "name_taken":
+				var er *character.NameTaken
+				errors.As(err, &er)
+				return nil, goagrpc.NewStatusError(codes.AlreadyExists, err, NewAddNameTakenError(er))
+			}
+		}
 		return nil, goagrpc.EncodeError(err)
 	}
 	return resp.(*characterpb.AddResponse), nil
@@ -124,6 +133,19 @@ func (s *Server) Update(ctx context.Context, message *characterpb.UpdateRequest)
 	ctx = context.WithValue(ctx, goa.ServiceKey, "character")
 	resp, err := s.UpdateH.Handle(ctx, message)
 	if err != nil {
+		var en goa.GoaErrorNamer
+		if errors.As(err, &en) {
+			switch en.GoaErrorName() {
+			case "not_found":
+				var er *character.NotFound
+				errors.As(err, &er)
+				return nil, goagrpc.NewStatusError(codes.NotFound, err, NewUpdateNotFoundError(er))
+			case "name_taken":
+				var er *character.NameTaken
+				errors.As(err, &er)
+				return nil, goagrpc.NewStatusError(codes.AlreadyExists, err, NewUpdateNameTakenError(er))
+			}
+		}
 		return nil, goagrpc.EncodeError(err)
 	}
 	return resp.(*characterpb.UpdateResponse), nil
@@ -145,6 +167,15 @@ func (s *Server) Remove(ctx context.Context, message *characterpb.RemoveRequest)
 	ctx = context.WithValue(ctx, goa.ServiceKey, "character")
 	resp, err := s.RemoveH.Handle(ctx, message)
 	if err != nil {
+		var en goa.GoaErrorNamer
+		if errors.As(err, &en) {
+			switch en.GoaErrorName() {
+			case "not_found":
+				var er *character.NotFound
+				errors.As(err, &er)
+				return nil, goagrpc.NewStatusError(codes.NotFound, err, NewRemoveNotFoundError(er))
+			}
+		}
 		return nil, goagrpc.EncodeError(err)
 	}
 	return resp.(*characterpb.RemoveResponse), nil

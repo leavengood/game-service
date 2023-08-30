@@ -22,23 +22,13 @@ paths:
                                 $ref: '#/components/schemas/StoredCharacterResponseCollection'
                             example:
                                 - description: A grizzled wizard with a penchant for mayhem and mead
-                                  experience: 47735
-                                  health: 495
+                                  experience: 91154
+                                  health: 1054
                                   id: 123abc
                                   name: Arvish the Wise
                                 - description: A grizzled wizard with a penchant for mayhem and mead
-                                  experience: 47735
-                                  health: 495
-                                  id: 123abc
-                                  name: Arvish the Wise
-                                - description: A grizzled wizard with a penchant for mayhem and mead
-                                  experience: 47735
-                                  health: 495
-                                  id: 123abc
-                                  name: Arvish the Wise
-                                - description: A grizzled wizard with a penchant for mayhem and mead
-                                  experience: 47735
-                                  health: 495
+                                  experience: 91154
+                                  health: 1054
                                   id: 123abc
                                   name: Arvish the Wise
         post:
@@ -52,11 +42,11 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/AddRequestBody2'
+                            $ref: '#/components/schemas/AddRequestBody'
                         example:
                             description: A grizzled wizard with a penchant for mayhem and mead
-                            experience: 83494
-                            health: 157
+                            experience: 36060
+                            health: 1852
                             name: Arvish the Wise
             responses:
                 "201":
@@ -65,8 +55,8 @@ paths:
                         application/json:
                             schema:
                                 type: string
-                                example: Enim cumque autem.
-                            example: Fuga quis aut et et pariatur eos.
+                                example: Quia nobis.
+                            example: Pariatur quis temporibus consequatur numquam iste dolores.
                 "409":
                     description: 'name_taken: name is taken'
                     content:
@@ -74,8 +64,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NameTaken'
                             example:
-                                message: Ea totam at.
-                                name: Aut sunt ratione illo.
+                                message: Magni distinctio ut.
+                                name: Nisi cumque voluptas.
     /back/characters/{id}:
         delete:
             tags:
@@ -91,8 +81,8 @@ paths:
                   schema:
                     type: string
                     description: ID of character to remove
-                    example: Amet ut.
-                  example: Sed cumque sapiente sapiente.
+                    example: Ea ducimus esse.
+                  example: Et velit velit.
             responses:
                 "204":
                     description: No Content response.
@@ -103,8 +93,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NotFound'
                             example:
-                                id: Mollitia ut harum autem ipsam ratione atque.
-                                message: In quia eos voluptas et non velit.
+                                id: Aut vero velit eos quaerat.
+                                message: Consequatur quia harum.
         get:
             tags:
                 - character
@@ -123,7 +113,7 @@ paths:
                     enum:
                         - default
                         - tiny
-                  example: default
+                  example: tiny
                 - name: id
                   in: path
                   description: ID of character to show
@@ -131,8 +121,8 @@ paths:
                   schema:
                     type: string
                     description: ID of character to show
-                    example: Ipsa vitae molestias itaque animi.
-                  example: Qui consequatur ut nisi expedita et.
+                    example: Ut quia vero velit.
+                  example: Laudantium non alias aliquam.
             responses:
                 "200":
                     description: OK response.
@@ -142,8 +132,8 @@ paths:
                                 $ref: '#/components/schemas/StoredCharacter'
                             example:
                                 description: A grizzled wizard with a penchant for mayhem and mead
-                                experience: 82605
-                                health: 384
+                                experience: 49749
+                                health: 1257
                                 id: 123abc
                                 name: Arvish the Wise
                 "404":
@@ -153,8 +143,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NotFound'
                             example:
-                                id: Dolorum officia modi harum nulla.
-                                message: Quaerat atque enim molestias modi harum.
+                                id: Dolorem veritatis et ipsum.
+                                message: Voluptas quis delectus natus.
         put:
             tags:
                 - character
@@ -169,19 +159,19 @@ paths:
                   schema:
                     type: string
                     description: ID of the character to be updated
-                    example: Vitae quae dolores.
-                  example: Quia sint qui dolorem.
+                    example: Qui tempore qui qui.
+                  example: Cupiditate deserunt id delectus ratione hic quo.
             requestBody:
                 required: true
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/UpdateRequestBody2'
+                            $ref: '#/components/schemas/UpdateRequestBody'
                         example:
                             character:
                                 description: A grizzled wizard with a penchant for mayhem and mead
-                                experience: 44185
-                                health: 1543
+                                experience: 26032
+                                health: 786
                                 name: Arvish the Wise
             responses:
                 "204":
@@ -193,8 +183,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NotFound'
                             example:
-                                id: Aperiam nihil.
-                                message: Accusamus consequatur voluptatum officia.
+                                id: Velit facilis.
+                                message: Iure doloribus architecto.
                 "409":
                     description: 'name_taken: name is taken'
                     content:
@@ -202,8 +192,99 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NameTaken'
                             example:
-                                message: Minus voluptatem voluptas quam.
-                                name: Qui maiores vitae odit rerum provident.
+                                message: Officia nisi minima tempora deleniti.
+                                name: Dignissimos voluptatem ipsam quos id saepe.
+    /back/inventory:
+        delete:
+            tags:
+                - inventory
+            summary: remove inventory
+            description: Remove an item ID from a character's inventory
+            operationId: inventory#remove
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AddRequestBody2'
+                        example:
+                            id: Optio mollitia.
+                            item_id: Harum autem ipsam ratione atque voluptatibus.
+            responses:
+                "204":
+                    description: No Content response.
+                "404":
+                    description: 'not_found: Character or item not found'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/NotFound'
+                            example:
+                                id: Consequatur sunt doloremque sed et quis.
+                                message: Et aut odit.
+        post:
+            tags:
+                - inventory
+            summary: add inventory
+            description: Add an item ID to a character's inventory
+            operationId: inventory#add
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AddRequestBody2'
+                        example:
+                            id: Est doloribus sequi qui animi in quia.
+                            item_id: Voluptas et non.
+            responses:
+                "201":
+                    description: Created response.
+    /back/inventory/{id}:
+        get:
+            tags:
+                - inventory
+            summary: show inventory
+            description: Show the inventory for a character as a list of item IDs
+            operationId: inventory#show
+            parameters:
+                - name: id
+                  in: path
+                  description: ID of the character
+                  required: true
+                  schema:
+                    type: string
+                    description: ID of the character
+                    example: Qui voluptatem eligendi.
+                  example: Dolorum earum quaerat quo ipsa laudantium voluptatibus.
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    type: string
+                                    example: Ut similique minus.
+                                example:
+                                    - Et id necessitatibus odit tempora labore.
+                                    - Sed nam nostrum voluptatem.
+                                    - Animi omnis ratione laborum eius ut quis.
+                            example:
+                                - Voluptate vitae dolores est est.
+                                - Quia sed cum.
+                                - Non dolor maiores.
+                                - Dolores voluptatem totam dicta delectus repudiandae.
+                "404":
+                    description: 'not_found: Character not found'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/NotFound'
+                            example:
+                                id: Rerum provident fugit perspiciatis aut odio dolor.
+                                message: Voluptatem voluptas quam facere qui maiores vitae.
     /back/items:
         get:
             tags:
@@ -219,30 +300,24 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/StoredItemResponseCollection'
                             example:
-                                - damage: 123
+                                - damage: 165
                                   description: A magnificent sword which grants the bearer +2 wisdom
-                                  healing: 17
+                                  healing: 11
                                   id: 123abc
                                   name: Sword of Wisdom
-                                  protection: 18
-                                - damage: 123
+                                  protection: 2
+                                - damage: 165
                                   description: A magnificent sword which grants the bearer +2 wisdom
-                                  healing: 17
+                                  healing: 11
                                   id: 123abc
                                   name: Sword of Wisdom
-                                  protection: 18
-                                - damage: 123
+                                  protection: 2
+                                - damage: 165
                                   description: A magnificent sword which grants the bearer +2 wisdom
-                                  healing: 17
+                                  healing: 11
                                   id: 123abc
                                   name: Sword of Wisdom
-                                  protection: 18
-                                - damage: 123
-                                  description: A magnificent sword which grants the bearer +2 wisdom
-                                  healing: 17
-                                  id: 123abc
-                                  name: Sword of Wisdom
-                                  protection: 18
+                                  protection: 2
         post:
             tags:
                 - item
@@ -254,13 +329,13 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/AddRequestBody'
+                            $ref: '#/components/schemas/AddRequestBody3'
                         example:
-                            damage: 2
+                            damage: 149
                             description: A magnificent sword which grants the bearer +2 wisdom
-                            healing: 75
+                            healing: 52
                             name: Sword of Wisdom
-                            protection: 10
+                            protection: 17
             responses:
                 "201":
                     description: Created response.
@@ -268,8 +343,8 @@ paths:
                         application/json:
                             schema:
                                 type: string
-                                example: Aut optio quo temporibus repudiandae.
-                            example: Doloremque fugiat impedit sed cum sapiente voluptate.
+                                example: Eligendi hic molestias cupiditate.
+                            example: Totam porro aut deleniti.
                 "409":
                     description: 'name_taken: name is taken'
                     content:
@@ -277,8 +352,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NameTaken'
                             example:
-                                message: Ipsum error alias velit veritatis.
-                                name: Ratione omnis doloribus autem at.
+                                message: Ducimus quod.
+                                name: Amet praesentium atque quisquam occaecati.
     /back/items/{id}:
         delete:
             tags:
@@ -294,8 +369,8 @@ paths:
                   schema:
                     type: string
                     description: ID of item to remove
-                    example: Dolorem quo et.
-                  example: Totam rem exercitationem praesentium.
+                    example: Veritatis accusantium asperiores vero quis vel.
+                  example: Et non ut quam aliquid.
             responses:
                 "204":
                     description: No Content response.
@@ -306,8 +381,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NotFound'
                             example:
-                                id: Dignissimos voluptatem ipsam quos id saepe.
-                                message: Officia nisi minima tempora deleniti.
+                                id: Libero deleniti quo culpa.
+                                message: Autem sed.
         get:
             tags:
                 - item
@@ -326,7 +401,7 @@ paths:
                     enum:
                         - default
                         - tiny
-                  example: tiny
+                  example: default
                 - name: id
                   in: path
                   description: ID of item to show
@@ -334,8 +409,8 @@ paths:
                   schema:
                     type: string
                     description: ID of item to show
-                    example: Eum enim.
-                  example: Esse ducimus voluptatem qui enim modi.
+                    example: Est quod est eaque ut sapiente occaecati.
+                  example: Veritatis nulla ut.
             responses:
                 "200":
                     description: OK response.
@@ -344,12 +419,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/StoredItem'
                             example:
-                                damage: 54
+                                damage: 104
                                 description: A magnificent sword which grants the bearer +2 wisdom
-                                healing: 164
+                                healing: 122
                                 id: 123abc
                                 name: Sword of Wisdom
-                                protection: 11
+                                protection: 17
                 "404":
                     description: 'not_found: Item not found'
                     content:
@@ -357,8 +432,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NotFound'
                             example:
-                                id: Voluptatem officia quis.
-                                message: Vel placeat atque.
+                                id: Aut est fugiat.
+                                message: Eum ratione accusamus quae atque accusantium.
         put:
             tags:
                 - item
@@ -373,21 +448,21 @@ paths:
                   schema:
                     type: string
                     description: ID of the item to be updated
-                    example: Culpa voluptas vel non voluptas blanditiis.
-                  example: Maiores voluptatem natus est occaecati sapiente.
+                    example: Alias quia vel reiciendis rerum eius.
+                  example: Delectus debitis pariatur animi laboriosam.
             requestBody:
                 required: true
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/UpdateRequestBody'
+                            $ref: '#/components/schemas/UpdateRequestBody2'
                         example:
                             item:
-                                damage: 49
+                                damage: 99
                                 description: A magnificent sword which grants the bearer +2 wisdom
-                                healing: 103
+                                healing: 57
                                 name: Sword of Wisdom
-                                protection: 12
+                                protection: 17
             responses:
                 "204":
                     description: No Content response.
@@ -398,8 +473,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NotFound'
                             example:
-                                id: Ut expedita nisi cumque voluptas soluta rerum.
-                                message: Quo magni.
+                                id: Nam nostrum.
+                                message: Et nemo voluptatibus eum excepturi error.
                 "409":
                     description: 'name_taken: name is taken'
                     content:
@@ -407,8 +482,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/NameTaken'
                             example:
-                                message: Nam in repellendus architecto non quia.
-                                name: Qui deleniti dolore.
+                                message: Doloribus voluptas.
+                                name: Minima qui quia id animi vero.
     /items:
         get:
             tags:
@@ -424,63 +499,33 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/StoredItemCollection'
                             example:
-                                - damage: 191
+                                - damage: 36
                                   description: A magnificent sword which grants the bearer +2 wisdom
-                                  healing: 141
+                                  healing: 130
                                   id: 123abc
                                   name: Sword of Wisdom
-                                  protection: 9
-                                - damage: 191
+                                  protection: 15
+                                - damage: 36
                                   description: A magnificent sword which grants the bearer +2 wisdom
-                                  healing: 141
+                                  healing: 130
                                   id: 123abc
                                   name: Sword of Wisdom
-                                  protection: 9
+                                  protection: 15
+                                - damage: 36
+                                  description: A magnificent sword which grants the bearer +2 wisdom
+                                  healing: 130
+                                  id: 123abc
+                                  name: Sword of Wisdom
+                                  protection: 15
+                                - damage: 36
+                                  description: A magnificent sword which grants the bearer +2 wisdom
+                                  healing: 130
+                                  id: 123abc
+                                  name: Sword of Wisdom
+                                  protection: 15
 components:
     schemas:
         AddRequestBody:
-            type: object
-            properties:
-                damage:
-                    type: integer
-                    description: Amount of damage the item can do
-                    example: 147
-                    minimum: 0
-                    maximum: 200
-                description:
-                    type: string
-                    description: Description of item
-                    example: A magnificent sword which grants the bearer +2 wisdom
-                    maxLength: 2000
-                healing:
-                    type: integer
-                    description: Amount of healing the item can provide
-                    example: 169
-                    minimum: 0
-                    maximum: 200
-                name:
-                    type: string
-                    description: Name of item
-                    example: Sword of Wisdom
-                    maxLength: 100
-                protection:
-                    type: integer
-                    description: Amount of protection the item can provide
-                    example: 6
-                    minimum: 0
-                    maximum: 20
-            example:
-                damage: 133
-                description: A magnificent sword which grants the bearer +2 wisdom
-                healing: 115
-                name: Sword of Wisdom
-                protection: 1
-            required:
-                - name
-                - damage
-                - healing
-                - protection
-        AddRequestBody2:
             type: object
             properties:
                 description:
@@ -491,13 +536,13 @@ components:
                 experience:
                     type: integer
                     description: Amount of experience the character has
-                    example: 19105
+                    example: 92755
                     minimum: 0
                     maximum: 100000
                 health:
                     type: integer
                     description: Amount of health the character has
-                    example: 1329
+                    example: 130
                     minimum: 0
                     maximum: 2000
                 name:
@@ -507,27 +552,86 @@ components:
                     maxLength: 100
             example:
                 description: A grizzled wizard with a penchant for mayhem and mead
-                experience: 68276
-                health: 360
+                experience: 44618
+                health: 1025
                 name: Arvish the Wise
             required:
                 - name
                 - health
+        AddRequestBody2:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: ID of the character
+                    example: Impedit sit sunt quasi quibusdam dolorem non.
+                item_id:
+                    type: string
+                    description: ID of the item
+                    example: Expedita fuga.
+            example:
+                id: Sit dolores.
+                item_id: Omnis suscipit et provident vero ut.
+            required:
+                - id
+                - item_id
+        AddRequestBody3:
+            type: object
+            properties:
+                damage:
+                    type: integer
+                    description: Amount of damage the item can do
+                    example: 47
+                    minimum: 0
+                    maximum: 200
+                description:
+                    type: string
+                    description: Description of item
+                    example: A magnificent sword which grants the bearer +2 wisdom
+                    maxLength: 2000
+                healing:
+                    type: integer
+                    description: Amount of healing the item can provide
+                    example: 12
+                    minimum: 0
+                    maximum: 200
+                name:
+                    type: string
+                    description: Name of item
+                    example: Sword of Wisdom
+                    maxLength: 100
+                protection:
+                    type: integer
+                    description: Amount of protection the item can provide
+                    example: 10
+                    minimum: 0
+                    maximum: 20
+            example:
+                damage: 51
+                description: A magnificent sword which grants the bearer +2 wisdom
+                healing: 3
+                name: Sword of Wisdom
+                protection: 18
+            required:
+                - name
+                - damage
+                - healing
+                - protection
         NameTaken:
             type: object
             properties:
                 message:
                     type: string
                     description: name taken
-                    example: Vel et earum vero.
+                    example: Eum ratione a doloribus similique.
                 name:
                     type: string
                     description: name that is not unique
-                    example: Ad repudiandae et.
+                    example: Ut voluptatem accusamus alias mollitia quo.
             description: name is taken
             example:
-                message: Voluptas ut libero delectus.
-                name: Velit aut velit.
+                message: Cum dolorum.
+                name: Est et qui molestiae quibusdam sunt.
             required:
                 - message
                 - name
@@ -537,15 +641,15 @@ components:
                 id:
                     type: string
                     description: ID of missing item
-                    example: Optio illo excepturi.
+                    example: Et excepturi.
                 message:
                     type: string
                     description: not found
-                    example: Consequatur at.
-            description: Item not found
+                    example: Odio culpa rerum veritatis.
+            description: character not found
             example:
-                id: Laboriosam et.
-                message: Nihil aliquam.
+                id: Iste reiciendis.
+                message: Eveniet magni numquam reiciendis debitis in possimus.
             required:
                 - message
                 - id
@@ -560,13 +664,13 @@ components:
                 experience:
                     type: integer
                     description: Amount of experience the character has
-                    example: 76940
+                    example: 5401
                     minimum: 0
                     maximum: 100000
                 health:
                     type: integer
                     description: Amount of health the character has
-                    example: 1883
+                    example: 632
                     minimum: 0
                     maximum: 2000
                 id:
@@ -580,8 +684,8 @@ components:
                     maxLength: 100
             example:
                 description: A grizzled wizard with a penchant for mayhem and mead
-                experience: 6527
-                health: 119
+                experience: 34508
+                health: 1487
                 id: 123abc
                 name: Arvish the Wise
             required:
@@ -600,13 +704,13 @@ components:
                 experience:
                     type: integer
                     description: Amount of experience the character has
-                    example: 6796
+                    example: 43628
                     minimum: 0
                     maximum: 100000
                 health:
                     type: integer
                     description: Amount of health the character has
-                    example: 198
+                    example: 1684
                     minimum: 0
                     maximum: 2000
                 id:
@@ -621,8 +725,8 @@ components:
             description: A StoredCharacter describes an character stored with an ID (default view)
             example:
                 description: A grizzled wizard with a penchant for mayhem and mead
-                experience: 23394
-                health: 1975
+                experience: 10595
+                health: 1238
                 id: 123abc
                 name: Arvish the Wise
             required:
@@ -637,18 +741,23 @@ components:
             description: ListResponseBody is the result type for an array of StoredCharacterResponse (default view)
             example:
                 - description: A grizzled wizard with a penchant for mayhem and mead
-                  experience: 47735
-                  health: 495
+                  experience: 91154
+                  health: 1054
                   id: 123abc
                   name: Arvish the Wise
                 - description: A grizzled wizard with a penchant for mayhem and mead
-                  experience: 47735
-                  health: 495
+                  experience: 91154
+                  health: 1054
                   id: 123abc
                   name: Arvish the Wise
                 - description: A grizzled wizard with a penchant for mayhem and mead
-                  experience: 47735
-                  health: 495
+                  experience: 91154
+                  health: 1054
+                  id: 123abc
+                  name: Arvish the Wise
+                - description: A grizzled wizard with a penchant for mayhem and mead
+                  experience: 91154
+                  health: 1054
                   id: 123abc
                   name: Arvish the Wise
         StoredItem:
@@ -657,7 +766,7 @@ components:
                 damage:
                     type: integer
                     description: Amount of damage the item can do
-                    example: 158
+                    example: 143
                     minimum: 0
                     maximum: 200
                 description:
@@ -668,7 +777,7 @@ components:
                 healing:
                     type: integer
                     description: Amount of healing the item can provide
-                    example: 9
+                    example: 93
                     minimum: 0
                     maximum: 200
                 id:
@@ -683,16 +792,16 @@ components:
                 protection:
                     type: integer
                     description: Amount of protection the item can provide
-                    example: 15
+                    example: 4
                     minimum: 0
                     maximum: 20
             example:
-                damage: 152
+                damage: 98
                 description: A magnificent sword which grants the bearer +2 wisdom
-                healing: 102
+                healing: 82
                 id: 123abc
                 name: Sword of Wisdom
-                protection: 1
+                protection: 4
             required:
                 - id
                 - name
@@ -704,37 +813,25 @@ components:
             items:
                 $ref: '#/components/schemas/StoredItem'
             example:
-                - damage: 191
+                - damage: 36
                   description: A magnificent sword which grants the bearer +2 wisdom
-                  healing: 141
+                  healing: 130
                   id: 123abc
                   name: Sword of Wisdom
-                  protection: 9
-                - damage: 191
+                  protection: 15
+                - damage: 36
                   description: A magnificent sword which grants the bearer +2 wisdom
-                  healing: 141
+                  healing: 130
                   id: 123abc
                   name: Sword of Wisdom
-                  protection: 9
-                - damage: 191
-                  description: A magnificent sword which grants the bearer +2 wisdom
-                  healing: 141
-                  id: 123abc
-                  name: Sword of Wisdom
-                  protection: 9
-                - damage: 191
-                  description: A magnificent sword which grants the bearer +2 wisdom
-                  healing: 141
-                  id: 123abc
-                  name: Sword of Wisdom
-                  protection: 9
+                  protection: 15
         StoredItemResponse:
             type: object
             properties:
                 damage:
                     type: integer
                     description: Amount of damage the item can do
-                    example: 197
+                    example: 171
                     minimum: 0
                     maximum: 200
                 description:
@@ -745,7 +842,7 @@ components:
                 healing:
                     type: integer
                     description: Amount of healing the item can provide
-                    example: 57
+                    example: 102
                     minimum: 0
                     maximum: 200
                 id:
@@ -760,17 +857,17 @@ components:
                 protection:
                     type: integer
                     description: Amount of protection the item can provide
-                    example: 8
+                    example: 7
                     minimum: 0
                     maximum: 20
             description: A StoredItem describes an item stored with an ID (default view)
             example:
-                damage: 35
+                damage: 193
                 description: A magnificent sword which grants the bearer +2 wisdom
-                healing: 195
+                healing: 143
                 id: 123abc
                 name: Sword of Wisdom
-                protection: 19
+                protection: 7
             required:
                 - id
                 - name
@@ -783,55 +880,63 @@ components:
                 $ref: '#/components/schemas/StoredItemResponse'
             description: ListResponseBody is the result type for an array of StoredItemResponse (default view)
             example:
-                - damage: 123
+                - damage: 165
                   description: A magnificent sword which grants the bearer +2 wisdom
-                  healing: 17
+                  healing: 11
                   id: 123abc
                   name: Sword of Wisdom
-                  protection: 18
-                - damage: 123
+                  protection: 2
+                - damage: 165
                   description: A magnificent sword which grants the bearer +2 wisdom
-                  healing: 17
+                  healing: 11
                   id: 123abc
                   name: Sword of Wisdom
-                  protection: 18
-                - damage: 123
+                  protection: 2
+                - damage: 165
                   description: A magnificent sword which grants the bearer +2 wisdom
-                  healing: 17
+                  healing: 11
                   id: 123abc
                   name: Sword of Wisdom
-                  protection: 18
+                  protection: 2
+                - damage: 165
+                  description: A magnificent sword which grants the bearer +2 wisdom
+                  healing: 11
+                  id: 123abc
+                  name: Sword of Wisdom
+                  protection: 2
         UpdateRequestBody:
             type: object
             properties:
-                item:
-                    $ref: '#/components/schemas/AddRequestBody'
-            example:
-                item:
-                    damage: 49
-                    description: A magnificent sword which grants the bearer +2 wisdom
-                    healing: 103
-                    name: Sword of Wisdom
-                    protection: 12
-            required:
-                - item
-        UpdateRequestBody2:
-            type: object
-            properties:
                 character:
-                    $ref: '#/components/schemas/AddRequestBody2'
+                    $ref: '#/components/schemas/AddRequestBody'
             example:
                 character:
                     description: A grizzled wizard with a penchant for mayhem and mead
-                    experience: 44185
-                    health: 1543
+                    experience: 26032
+                    health: 786
                     name: Arvish the Wise
             required:
                 - character
+        UpdateRequestBody2:
+            type: object
+            properties:
+                item:
+                    $ref: '#/components/schemas/AddRequestBody3'
+            example:
+                item:
+                    damage: 99
+                    description: A magnificent sword which grants the bearer +2 wisdom
+                    healing: 57
+                    name: Sword of Wisdom
+                    protection: 17
+            required:
+                - item
 tags:
-    - name: item
-      description: The item service is the service for managing items
     - name: character
       description: The character service is the service for managing characters
+    - name: inventory
+      description: The inventory service is the service for managing character inventories
+    - name: item
+      description: The item service is the service for managing items
     - name: front
       description: The front service is the main HTTP API for the game

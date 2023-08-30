@@ -51,7 +51,7 @@ func BuildAddPayload(characterAddBody string) (*character.Character, error) {
 	{
 		err = json.Unmarshal([]byte(characterAddBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n      \"experience\": 83494,\n      \"health\": 157,\n      \"name\": \"Arvish the Wise\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n      \"experience\": 36060,\n      \"health\": 1852,\n      \"name\": \"Arvish the Wise\"\n   }'")
 		}
 		if utf8.RuneCountInString(body.Name) > 100 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 100, false))
@@ -99,7 +99,7 @@ func BuildUpdatePayload(characterUpdateBody string, characterUpdateID string) (*
 	{
 		err = json.Unmarshal([]byte(characterUpdateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"character\": {\n         \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n         \"experience\": 44185,\n         \"health\": 1543,\n         \"name\": \"Arvish the Wise\"\n      }\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"character\": {\n         \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n         \"experience\": 26032,\n         \"health\": 786,\n         \"name\": \"Arvish the Wise\"\n      }\n   }'")
 		}
 		if body.Character == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("character", "body"))

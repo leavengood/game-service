@@ -86,6 +86,16 @@ func NewProtoAddResponse(result string) *characterpb.AddResponse {
 	return message
 }
 
+// NewAddNameTakenError builds the gRPC error response type from the error of
+// the "add" endpoint of the "character" service.
+func NewAddNameTakenError(er *character.NameTaken) *characterpb.AddNameTakenError {
+	message := &characterpb.AddNameTakenError{
+		Message_: er.Message,
+		Name:     er.Name,
+	}
+	return message
+}
+
 // NewUpdatePayload builds the payload of the "update" endpoint of the
 // "character" service from the gRPC request type.
 func NewUpdatePayload(message *characterpb.UpdateRequest) *character.UpdatePayload {
@@ -105,6 +115,26 @@ func NewProtoUpdateResponse() *characterpb.UpdateResponse {
 	return message
 }
 
+// NewUpdateNotFoundError builds the gRPC error response type from the error of
+// the "update" endpoint of the "character" service.
+func NewUpdateNotFoundError(er *character.NotFound) *characterpb.UpdateNotFoundError {
+	message := &characterpb.UpdateNotFoundError{
+		Message_: er.Message,
+		Id:       er.ID,
+	}
+	return message
+}
+
+// NewUpdateNameTakenError builds the gRPC error response type from the error
+// of the "update" endpoint of the "character" service.
+func NewUpdateNameTakenError(er *character.NameTaken) *characterpb.UpdateNameTakenError {
+	message := &characterpb.UpdateNameTakenError{
+		Message_: er.Message,
+		Name:     er.Name,
+	}
+	return message
+}
+
 // NewRemovePayload builds the payload of the "remove" endpoint of the
 // "character" service from the gRPC request type.
 func NewRemovePayload(message *characterpb.RemoveRequest) *character.RemovePayload {
@@ -118,6 +148,16 @@ func NewRemovePayload(message *characterpb.RemoveRequest) *character.RemovePaylo
 // "remove" endpoint of the "character" service.
 func NewProtoRemoveResponse() *characterpb.RemoveResponse {
 	message := &characterpb.RemoveResponse{}
+	return message
+}
+
+// NewRemoveNotFoundError builds the gRPC error response type from the error of
+// the "remove" endpoint of the "character" service.
+func NewRemoveNotFoundError(er *character.NotFound) *characterpb.RemoveNotFoundError {
+	message := &characterpb.RemoveNotFoundError{
+		Message_: er.Message,
+		Id:       er.ID,
+	}
 	return message
 }
 

@@ -10,12 +10,10 @@ import (
 	itemview "game-service/gen/item/views"
 )
 
-// item service example implementation.
-// The example methods log the requests and return zero values.
+// itemsrvc manages an in-memory list of items
 type itemsrvc struct {
 	logger *log.Logger
-	// TODO: Switch to a map?
-	items item.StoredItemCollection
+	items  item.StoredItemCollection
 }
 
 // NewItem returns the item service implementation.
@@ -76,7 +74,6 @@ func (s *itemsrvc) Show(ctx context.Context, p *item.ShowPayload) (res *item.Sto
 	}
 
 	if res == nil {
-		s.logger.Print("item.show: returning not found error")
 		return res, view, itemNotFound(p.ID)
 	}
 

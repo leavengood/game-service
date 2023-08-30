@@ -12,6 +12,7 @@ import (
 	"fmt"
 	characterc "game-service/gen/grpc/character/client"
 	frontc "game-service/gen/grpc/front/client"
+	inventoryc "game-service/gen/grpc/inventory/client"
 	itemc "game-service/gen/grpc/item/client"
 	"os"
 
@@ -23,17 +24,21 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `front list-items
+	return `character (list|show|add|update|remove)
+inventory (show|add|remove)
+front list-items
 item (list|show|add|update|remove)
-character (list|show|add|update|remove)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` front list-items` + "\n" +
+	return os.Args[0] + ` character list` + "\n" +
+		os.Args[0] + ` inventory show --message '{
+      "id": "Eum aperiam ut voluptatem sunt omnis."
+   }'` + "\n" +
+		os.Args[0] + ` front list-items` + "\n" +
 		os.Args[0] + ` item list` + "\n" +
-		os.Args[0] + ` character list` + "\n" +
 		""
 }
 
@@ -41,6 +46,34 @@ func UsageExamples() string {
 // line.
 func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, any, error) {
 	var (
+		characterFlags = flag.NewFlagSet("character", flag.ContinueOnError)
+
+		characterListFlags = flag.NewFlagSet("list", flag.ExitOnError)
+
+		characterShowFlags       = flag.NewFlagSet("show", flag.ExitOnError)
+		characterShowMessageFlag = characterShowFlags.String("message", "", "")
+		characterShowViewFlag    = characterShowFlags.String("view", "", "")
+
+		characterAddFlags       = flag.NewFlagSet("add", flag.ExitOnError)
+		characterAddMessageFlag = characterAddFlags.String("message", "", "")
+
+		characterUpdateFlags       = flag.NewFlagSet("update", flag.ExitOnError)
+		characterUpdateMessageFlag = characterUpdateFlags.String("message", "", "")
+
+		characterRemoveFlags       = flag.NewFlagSet("remove", flag.ExitOnError)
+		characterRemoveMessageFlag = characterRemoveFlags.String("message", "", "")
+
+		inventoryFlags = flag.NewFlagSet("inventory", flag.ContinueOnError)
+
+		inventoryShowFlags       = flag.NewFlagSet("show", flag.ExitOnError)
+		inventoryShowMessageFlag = inventoryShowFlags.String("message", "", "")
+
+		inventoryAddFlags       = flag.NewFlagSet("add", flag.ExitOnError)
+		inventoryAddMessageFlag = inventoryAddFlags.String("message", "", "")
+
+		inventoryRemoveFlags       = flag.NewFlagSet("remove", flag.ExitOnError)
+		inventoryRemoveMessageFlag = inventoryRemoveFlags.String("message", "", "")
+
 		frontFlags = flag.NewFlagSet("front", flag.ContinueOnError)
 
 		frontListItemsFlags = flag.NewFlagSet("list-items", flag.ExitOnError)
@@ -61,24 +94,19 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 
 		itemRemoveFlags       = flag.NewFlagSet("remove", flag.ExitOnError)
 		itemRemoveMessageFlag = itemRemoveFlags.String("message", "", "")
-
-		characterFlags = flag.NewFlagSet("character", flag.ContinueOnError)
-
-		characterListFlags = flag.NewFlagSet("list", flag.ExitOnError)
-
-		characterShowFlags       = flag.NewFlagSet("show", flag.ExitOnError)
-		characterShowMessageFlag = characterShowFlags.String("message", "", "")
-		characterShowViewFlag    = characterShowFlags.String("view", "", "")
-
-		characterAddFlags       = flag.NewFlagSet("add", flag.ExitOnError)
-		characterAddMessageFlag = characterAddFlags.String("message", "", "")
-
-		characterUpdateFlags       = flag.NewFlagSet("update", flag.ExitOnError)
-		characterUpdateMessageFlag = characterUpdateFlags.String("message", "", "")
-
-		characterRemoveFlags       = flag.NewFlagSet("remove", flag.ExitOnError)
-		characterRemoveMessageFlag = characterRemoveFlags.String("message", "", "")
 	)
+	characterFlags.Usage = characterUsage
+	characterListFlags.Usage = characterListUsage
+	characterShowFlags.Usage = characterShowUsage
+	characterAddFlags.Usage = characterAddUsage
+	characterUpdateFlags.Usage = characterUpdateUsage
+	characterRemoveFlags.Usage = characterRemoveUsage
+
+	inventoryFlags.Usage = inventoryUsage
+	inventoryShowFlags.Usage = inventoryShowUsage
+	inventoryAddFlags.Usage = inventoryAddUsage
+	inventoryRemoveFlags.Usage = inventoryRemoveUsage
+
 	frontFlags.Usage = frontUsage
 	frontListItemsFlags.Usage = frontListItemsUsage
 
@@ -88,13 +116,6 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 	itemAddFlags.Usage = itemAddUsage
 	itemUpdateFlags.Usage = itemUpdateUsage
 	itemRemoveFlags.Usage = itemRemoveUsage
-
-	characterFlags.Usage = characterUsage
-	characterListFlags.Usage = characterListUsage
-	characterShowFlags.Usage = characterShowUsage
-	characterAddFlags.Usage = characterAddUsage
-	characterUpdateFlags.Usage = characterUpdateUsage
-	characterRemoveFlags.Usage = characterRemoveUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -111,12 +132,14 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 	{
 		svcn = flag.Arg(0)
 		switch svcn {
+		case "character":
+			svcf = characterFlags
+		case "inventory":
+			svcf = inventoryFlags
 		case "front":
 			svcf = frontFlags
 		case "item":
 			svcf = itemFlags
-		case "character":
-			svcf = characterFlags
 		default:
 			return nil, nil, fmt.Errorf("unknown service %q", svcn)
 		}
@@ -132,6 +155,38 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 	{
 		epn = svcf.Arg(0)
 		switch svcn {
+		case "character":
+			switch epn {
+			case "list":
+				epf = characterListFlags
+
+			case "show":
+				epf = characterShowFlags
+
+			case "add":
+				epf = characterAddFlags
+
+			case "update":
+				epf = characterUpdateFlags
+
+			case "remove":
+				epf = characterRemoveFlags
+
+			}
+
+		case "inventory":
+			switch epn {
+			case "show":
+				epf = inventoryShowFlags
+
+			case "add":
+				epf = inventoryAddFlags
+
+			case "remove":
+				epf = inventoryRemoveFlags
+
+			}
+
 		case "front":
 			switch epn {
 			case "list-items":
@@ -158,25 +213,6 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 
 			}
 
-		case "character":
-			switch epn {
-			case "list":
-				epf = characterListFlags
-
-			case "show":
-				epf = characterShowFlags
-
-			case "add":
-				epf = characterAddFlags
-
-			case "update":
-				epf = characterUpdateFlags
-
-			case "remove":
-				epf = characterRemoveFlags
-
-			}
-
 		}
 	}
 	if epf == nil {
@@ -197,6 +233,38 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 	)
 	{
 		switch svcn {
+		case "character":
+			c := characterc.NewClient(cc, opts...)
+			switch epn {
+			case "list":
+				endpoint = c.List()
+				data = nil
+			case "show":
+				endpoint = c.Show()
+				data, err = characterc.BuildShowPayload(*characterShowMessageFlag, *characterShowViewFlag)
+			case "add":
+				endpoint = c.Add()
+				data, err = characterc.BuildAddPayload(*characterAddMessageFlag)
+			case "update":
+				endpoint = c.Update()
+				data, err = characterc.BuildUpdatePayload(*characterUpdateMessageFlag)
+			case "remove":
+				endpoint = c.Remove()
+				data, err = characterc.BuildRemovePayload(*characterRemoveMessageFlag)
+			}
+		case "inventory":
+			c := inventoryc.NewClient(cc, opts...)
+			switch epn {
+			case "show":
+				endpoint = c.Show()
+				data, err = inventoryc.BuildShowPayload(*inventoryShowMessageFlag)
+			case "add":
+				endpoint = c.Add()
+				data, err = inventoryc.BuildAddPayload(*inventoryAddMessageFlag)
+			case "remove":
+				endpoint = c.Remove()
+				data, err = inventoryc.BuildRemovePayload(*inventoryRemoveMessageFlag)
+			}
 		case "front":
 			c := frontc.NewClient(cc, opts...)
 			switch epn {
@@ -223,25 +291,6 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 				endpoint = c.Remove()
 				data, err = itemc.BuildRemovePayload(*itemRemoveMessageFlag)
 			}
-		case "character":
-			c := characterc.NewClient(cc, opts...)
-			switch epn {
-			case "list":
-				endpoint = c.List()
-				data = nil
-			case "show":
-				endpoint = c.Show()
-				data, err = characterc.BuildShowPayload(*characterShowMessageFlag, *characterShowViewFlag)
-			case "add":
-				endpoint = c.Add()
-				data, err = characterc.BuildAddPayload(*characterAddMessageFlag)
-			case "update":
-				endpoint = c.Update()
-				data, err = characterc.BuildUpdatePayload(*characterUpdateMessageFlag)
-			case "remove":
-				endpoint = c.Remove()
-				data, err = characterc.BuildRemovePayload(*characterRemoveMessageFlag)
-			}
 		}
 	}
 	if err != nil {
@@ -249,6 +298,153 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 	}
 
 	return endpoint, data, nil
+}
+
+// characterUsage displays the usage of the character command and its
+// subcommands.
+func characterUsage() {
+	fmt.Fprintf(os.Stderr, `The character service is the service for managing characters
+Usage:
+    %[1]s [globalflags] character COMMAND [flags]
+
+COMMAND:
+    list: List all characters
+    show: Show character by ID
+    add: Add new character and return its ID
+    update: Update a character with the given ID
+    remove: Remove a character
+
+Additional help:
+    %[1]s character COMMAND --help
+`, os.Args[0])
+}
+func characterListUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character list
+
+List all characters
+
+Example:
+    %[1]s character list
+`, os.Args[0])
+}
+
+func characterShowUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character show -message JSON -view STRING
+
+Show character by ID
+    -message JSON: 
+    -view STRING: 
+
+Example:
+    %[1]s character show --message '{
+      "id": "Tempore qui dignissimos quia."
+   }' --view "tiny"
+`, os.Args[0])
+}
+
+func characterAddUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character add -message JSON
+
+Add new character and return its ID
+    -message JSON: 
+
+Example:
+    %[1]s character add --message '{
+      "description": "A grizzled wizard with a penchant for mayhem and mead",
+      "experience": 10767,
+      "health": 946,
+      "name": "Arvish the Wise"
+   }'
+`, os.Args[0])
+}
+
+func characterUpdateUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character update -message JSON
+
+Update a character with the given ID
+    -message JSON: 
+
+Example:
+    %[1]s character update --message '{
+      "character": {
+         "description": "A grizzled wizard with a penchant for mayhem and mead",
+         "experience": 13813,
+         "health": 35,
+         "name": "Arvish the Wise"
+      },
+      "id": "Fugit ipsa debitis dolor ipsam."
+   }'
+`, os.Args[0])
+}
+
+func characterRemoveUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character remove -message JSON
+
+Remove a character
+    -message JSON: 
+
+Example:
+    %[1]s character remove --message '{
+      "id": "Veritatis et."
+   }'
+`, os.Args[0])
+}
+
+// inventoryUsage displays the usage of the inventory command and its
+// subcommands.
+func inventoryUsage() {
+	fmt.Fprintf(os.Stderr, `The inventory service is the service for managing character inventories
+Usage:
+    %[1]s [globalflags] inventory COMMAND [flags]
+
+COMMAND:
+    show: Show the inventory for a character as a list of item IDs
+    add: Add an item ID to a character's inventory
+    remove: Remove an item ID from a character's inventory
+
+Additional help:
+    %[1]s inventory COMMAND --help
+`, os.Args[0])
+}
+func inventoryShowUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] inventory show -message JSON
+
+Show the inventory for a character as a list of item IDs
+    -message JSON: 
+
+Example:
+    %[1]s inventory show --message '{
+      "id": "Eum aperiam ut voluptatem sunt omnis."
+   }'
+`, os.Args[0])
+}
+
+func inventoryAddUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] inventory add -message JSON
+
+Add an item ID to a character's inventory
+    -message JSON: 
+
+Example:
+    %[1]s inventory add --message '{
+      "id": "Suscipit fugit consequatur voluptatum.",
+      "item_id": "Consequatur quisquam impedit."
+   }'
+`, os.Args[0])
+}
+
+func inventoryRemoveUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] inventory remove -message JSON
+
+Remove an item ID from a character's inventory
+    -message JSON: 
+
+Example:
+    %[1]s inventory remove --message '{
+      "id": "Molestiae eos totam quo totam nemo.",
+      "item_id": "Voluptatem praesentium qui."
+   }'
+`, os.Args[0])
 }
 
 // frontUsage displays the usage of the front command and its subcommands.
@@ -310,8 +506,8 @@ Show item by ID
 
 Example:
     %[1]s item show --message '{
-      "id": "Voluptatem consequuntur ut pariatur quo facere perferendis."
-   }' --view "default"
+      "id": "Cumque ad."
+   }' --view "tiny"
 `, os.Args[0])
 }
 
@@ -323,11 +519,11 @@ Add new item and return its ID
 
 Example:
     %[1]s item add --message '{
-      "damage": 109,
+      "damage": 107,
       "description": "A magnificent sword which grants the bearer +2 wisdom",
-      "healing": 52,
+      "healing": 182,
       "name": "Sword of Wisdom",
-      "protection": 2
+      "protection": 18
    }'
 `, os.Args[0])
 }
@@ -340,13 +536,13 @@ Update an item with the given ID
 
 Example:
     %[1]s item update --message '{
-      "id": "Molestias ducimus.",
+      "id": "Deserunt qui.",
       "item": {
-         "damage": 44,
+         "damage": 54,
          "description": "A magnificent sword which grants the bearer +2 wisdom",
-         "healing": 124,
+         "healing": 164,
          "name": "Sword of Wisdom",
-         "protection": 14
+         "protection": 11
       }
    }'
 `, os.Args[0])
@@ -360,97 +556,7 @@ Remove an item
 
 Example:
     %[1]s item remove --message '{
-      "id": "Ipsa nisi eos laboriosam cumque."
-   }'
-`, os.Args[0])
-}
-
-// characterUsage displays the usage of the character command and its
-// subcommands.
-func characterUsage() {
-	fmt.Fprintf(os.Stderr, `The character service is the service for managing characters
-Usage:
-    %[1]s [globalflags] character COMMAND [flags]
-
-COMMAND:
-    list: List all characters
-    show: Show character by ID
-    add: Add new character and return its ID
-    update: Update a character with the given ID
-    remove: Remove a character
-
-Additional help:
-    %[1]s character COMMAND --help
-`, os.Args[0])
-}
-func characterListUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character list
-
-List all characters
-
-Example:
-    %[1]s character list
-`, os.Args[0])
-}
-
-func characterShowUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character show -message JSON -view STRING
-
-Show character by ID
-    -message JSON: 
-    -view STRING: 
-
-Example:
-    %[1]s character show --message '{
-      "id": "Error sapiente et laboriosam voluptas."
-   }' --view "default"
-`, os.Args[0])
-}
-
-func characterAddUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character add -message JSON
-
-Add new character and return its ID
-    -message JSON: 
-
-Example:
-    %[1]s character add --message '{
-      "description": "A grizzled wizard with a penchant for mayhem and mead",
-      "experience": 79806,
-      "health": 937,
-      "name": "Arvish the Wise"
-   }'
-`, os.Args[0])
-}
-
-func characterUpdateUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character update -message JSON
-
-Update a character with the given ID
-    -message JSON: 
-
-Example:
-    %[1]s character update --message '{
-      "character": {
-         "description": "A grizzled wizard with a penchant for mayhem and mead",
-         "experience": 50405,
-         "health": 1370,
-         "name": "Arvish the Wise"
-      },
-      "id": "Nam nostrum."
-   }'
-`, os.Args[0])
-}
-
-func characterRemoveUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character remove -message JSON
-
-Remove a character
-    -message JSON: 
-
-Example:
-    %[1]s character remove --message '{
-      "id": "Doloribus voluptas."
+      "id": "Non dicta."
    }'
 `, os.Args[0])
 }

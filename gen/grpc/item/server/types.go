@@ -89,6 +89,16 @@ func NewProtoAddResponse(result string) *itempb.AddResponse {
 	return message
 }
 
+// NewAddNameTakenError builds the gRPC error response type from the error of
+// the "add" endpoint of the "item" service.
+func NewAddNameTakenError(er *item.NameTaken) *itempb.AddNameTakenError {
+	message := &itempb.AddNameTakenError{
+		Message_: er.Message,
+		Name:     er.Name,
+	}
+	return message
+}
+
 // NewUpdatePayload builds the payload of the "update" endpoint of the "item"
 // service from the gRPC request type.
 func NewUpdatePayload(message *itempb.UpdateRequest) *item.UpdatePayload {
@@ -108,6 +118,26 @@ func NewProtoUpdateResponse() *itempb.UpdateResponse {
 	return message
 }
 
+// NewUpdateNotFoundError builds the gRPC error response type from the error of
+// the "update" endpoint of the "item" service.
+func NewUpdateNotFoundError(er *item.NotFound) *itempb.UpdateNotFoundError {
+	message := &itempb.UpdateNotFoundError{
+		Message_: er.Message,
+		Id:       er.ID,
+	}
+	return message
+}
+
+// NewUpdateNameTakenError builds the gRPC error response type from the error
+// of the "update" endpoint of the "item" service.
+func NewUpdateNameTakenError(er *item.NameTaken) *itempb.UpdateNameTakenError {
+	message := &itempb.UpdateNameTakenError{
+		Message_: er.Message,
+		Name:     er.Name,
+	}
+	return message
+}
+
 // NewRemovePayload builds the payload of the "remove" endpoint of the "item"
 // service from the gRPC request type.
 func NewRemovePayload(message *itempb.RemoveRequest) *item.RemovePayload {
@@ -121,6 +151,16 @@ func NewRemovePayload(message *itempb.RemoveRequest) *item.RemovePayload {
 // "remove" endpoint of the "item" service.
 func NewProtoRemoveResponse() *itempb.RemoveResponse {
 	message := &itempb.RemoveResponse{}
+	return message
+}
+
+// NewRemoveNotFoundError builds the gRPC error response type from the error of
+// the "remove" endpoint of the "item" service.
+func NewRemoveNotFoundError(er *item.NotFound) *itempb.RemoveNotFoundError {
+	message := &itempb.RemoveNotFoundError{
+		Message_: er.Message,
+		Id:       er.ID,
+	}
 	return message
 }
 

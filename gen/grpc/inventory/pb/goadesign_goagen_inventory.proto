@@ -1,0 +1,58 @@
+// Code generated with goa v3.12.4, DO NOT EDIT.
+//
+// inventory protocol buffer definition
+//
+// Command:
+// $ goa gen game-service/design
+
+syntax = "proto3";
+
+package inventory;
+
+option go_package = "/inventorypb";
+
+// The inventory service is the service for managing character inventories
+service Inventory {
+	// Show the inventory for a character as a list of item IDs
+	rpc Show (ShowRequest) returns (ShowResponse);
+	// Add an item ID to a character's inventory
+	rpc Add (AddRequest) returns (AddResponse);
+	// Remove an item ID from a character's inventory
+	rpc Remove (RemoveRequest) returns (RemoveResponse);
+}
+
+message ShowNotFoundError {
+	// not found
+	string message_ = 1;
+	// ID of missing item
+	string id = 2;
+}
+
+message ShowRequest {
+	// ID of the character
+	string id = 1;
+}
+
+message ShowResponse {
+	repeated string field = 1;
+}
+
+message AddRequest {
+	// ID of the character
+	string id = 1;
+	// ID of the item
+	string item_id = 2;
+}
+
+message AddResponse {
+}
+
+message RemoveRequest {
+	// ID of the character
+	string id = 1;
+	// ID of the item
+	string item_id = 2;
+}
+
+message RemoveResponse {
+}

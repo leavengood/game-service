@@ -74,6 +74,13 @@ message ShowResponse {
 	uint32 protection = 6;
 }
 
+message AddNameTakenError {
+	// name taken
+	string message_ = 1;
+	// name that is not unique
+	string name = 2;
+}
+
 message AddRequest {
 	// Name of item
 	string name = 1;
@@ -89,6 +96,20 @@ message AddRequest {
 
 message AddResponse {
 	string field = 1;
+}
+
+message UpdateNotFoundError {
+	// not found
+	string message_ = 1;
+	// ID of missing item
+	string id = 2;
+}
+
+message UpdateNameTakenError {
+	// name taken
+	string message_ = 1;
+	// name that is not unique
+	string name = 2;
 }
 
 message UpdateRequest {
@@ -112,6 +133,13 @@ message Item2 {
 }
 
 message UpdateResponse {
+}
+
+message RemoveNotFoundError {
+	// not found
+	string message_ = 1;
+	// ID of missing item
+	string id = 2;
 }
 
 message RemoveRequest {

@@ -90,6 +90,16 @@ func NewAddResult(message *characterpb.AddResponse) string {
 	return result
 }
 
+// NewAddNameTakenError builds the error type of the "add" endpoint of the
+// "character" service from the gRPC error response type.
+func NewAddNameTakenError(message *characterpb.AddNameTakenError) *character.NameTaken {
+	er := &character.NameTaken{
+		Message: message.Message_,
+		Name:    message.Name,
+	}
+	return er
+}
+
 // NewProtoUpdateRequest builds the gRPC request type from the payload of the
 // "update" endpoint of the "character" service.
 func NewProtoUpdateRequest(payload *character.UpdatePayload) *characterpb.UpdateRequest {
@@ -102,6 +112,26 @@ func NewProtoUpdateRequest(payload *character.UpdatePayload) *characterpb.Update
 	return message
 }
 
+// NewUpdateNotFoundError builds the error type of the "update" endpoint of the
+// "character" service from the gRPC error response type.
+func NewUpdateNotFoundError(message *characterpb.UpdateNotFoundError) *character.NotFound {
+	er := &character.NotFound{
+		Message: message.Message_,
+		ID:      message.Id,
+	}
+	return er
+}
+
+// NewUpdateNameTakenError builds the error type of the "update" endpoint of
+// the "character" service from the gRPC error response type.
+func NewUpdateNameTakenError(message *characterpb.UpdateNameTakenError) *character.NameTaken {
+	er := &character.NameTaken{
+		Message: message.Message_,
+		Name:    message.Name,
+	}
+	return er
+}
+
 // NewProtoRemoveRequest builds the gRPC request type from the payload of the
 // "remove" endpoint of the "character" service.
 func NewProtoRemoveRequest(payload *character.RemovePayload) *characterpb.RemoveRequest {
@@ -109,6 +139,16 @@ func NewProtoRemoveRequest(payload *character.RemovePayload) *characterpb.Remove
 		Id: payload.ID,
 	}
 	return message
+}
+
+// NewRemoveNotFoundError builds the error type of the "remove" endpoint of the
+// "character" service from the gRPC error response type.
+func NewRemoveNotFoundError(message *characterpb.RemoveNotFoundError) *character.NotFound {
+	er := &character.NotFound{
+		Message: message.Message_,
+		ID:      message.Id,
+	}
+	return er
 }
 
 // ValidateStoredCharacterCollection runs the validations defined on

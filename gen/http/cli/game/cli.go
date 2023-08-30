@@ -12,6 +12,7 @@ import (
 	"fmt"
 	characterc "game-service/gen/http/character/client"
 	frontc "game-service/gen/http/front/client"
+	inventoryc "game-service/gen/http/inventory/client"
 	itemc "game-service/gen/http/item/client"
 	"net/http"
 	"os"
@@ -24,17 +25,19 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `front list-items
+	return `character (list|show|add|update|remove)
+inventory (show|add|remove)
+front list-items
 item (list|show|add|update|remove)
-character (list|show|add|update|remove)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` front list-items` + "\n" +
+	return os.Args[0] + ` character list` + "\n" +
+		os.Args[0] + ` inventory show --id "Officia modi harum nulla mollitia quaerat."` + "\n" +
+		os.Args[0] + ` front list-items` + "\n" +
 		os.Args[0] + ` item list` + "\n" +
-		os.Args[0] + ` character list` + "\n" +
 		""
 }
 
@@ -48,6 +51,35 @@ func ParseEndpoint(
 	restore bool,
 ) (goa.Endpoint, any, error) {
 	var (
+		characterFlags = flag.NewFlagSet("character", flag.ContinueOnError)
+
+		characterListFlags = flag.NewFlagSet("list", flag.ExitOnError)
+
+		characterShowFlags    = flag.NewFlagSet("show", flag.ExitOnError)
+		characterShowIDFlag   = characterShowFlags.String("id", "REQUIRED", "ID of character to show")
+		characterShowViewFlag = characterShowFlags.String("view", "", "")
+
+		characterAddFlags    = flag.NewFlagSet("add", flag.ExitOnError)
+		characterAddBodyFlag = characterAddFlags.String("body", "REQUIRED", "")
+
+		characterUpdateFlags    = flag.NewFlagSet("update", flag.ExitOnError)
+		characterUpdateBodyFlag = characterUpdateFlags.String("body", "REQUIRED", "")
+		characterUpdateIDFlag   = characterUpdateFlags.String("id", "REQUIRED", "ID of the character to be updated")
+
+		characterRemoveFlags  = flag.NewFlagSet("remove", flag.ExitOnError)
+		characterRemoveIDFlag = characterRemoveFlags.String("id", "REQUIRED", "ID of character to remove")
+
+		inventoryFlags = flag.NewFlagSet("inventory", flag.ContinueOnError)
+
+		inventoryShowFlags  = flag.NewFlagSet("show", flag.ExitOnError)
+		inventoryShowIDFlag = inventoryShowFlags.String("id", "REQUIRED", "ID of the character")
+
+		inventoryAddFlags    = flag.NewFlagSet("add", flag.ExitOnError)
+		inventoryAddBodyFlag = inventoryAddFlags.String("body", "REQUIRED", "")
+
+		inventoryRemoveFlags    = flag.NewFlagSet("remove", flag.ExitOnError)
+		inventoryRemoveBodyFlag = inventoryRemoveFlags.String("body", "REQUIRED", "")
+
 		frontFlags = flag.NewFlagSet("front", flag.ContinueOnError)
 
 		frontListItemsFlags = flag.NewFlagSet("list-items", flag.ExitOnError)
@@ -69,25 +101,19 @@ func ParseEndpoint(
 
 		itemRemoveFlags  = flag.NewFlagSet("remove", flag.ExitOnError)
 		itemRemoveIDFlag = itemRemoveFlags.String("id", "REQUIRED", "ID of item to remove")
-
-		characterFlags = flag.NewFlagSet("character", flag.ContinueOnError)
-
-		characterListFlags = flag.NewFlagSet("list", flag.ExitOnError)
-
-		characterShowFlags    = flag.NewFlagSet("show", flag.ExitOnError)
-		characterShowIDFlag   = characterShowFlags.String("id", "REQUIRED", "ID of character to show")
-		characterShowViewFlag = characterShowFlags.String("view", "", "")
-
-		characterAddFlags    = flag.NewFlagSet("add", flag.ExitOnError)
-		characterAddBodyFlag = characterAddFlags.String("body", "REQUIRED", "")
-
-		characterUpdateFlags    = flag.NewFlagSet("update", flag.ExitOnError)
-		characterUpdateBodyFlag = characterUpdateFlags.String("body", "REQUIRED", "")
-		characterUpdateIDFlag   = characterUpdateFlags.String("id", "REQUIRED", "ID of the character to be updated")
-
-		characterRemoveFlags  = flag.NewFlagSet("remove", flag.ExitOnError)
-		characterRemoveIDFlag = characterRemoveFlags.String("id", "REQUIRED", "ID of character to remove")
 	)
+	characterFlags.Usage = characterUsage
+	characterListFlags.Usage = characterListUsage
+	characterShowFlags.Usage = characterShowUsage
+	characterAddFlags.Usage = characterAddUsage
+	characterUpdateFlags.Usage = characterUpdateUsage
+	characterRemoveFlags.Usage = characterRemoveUsage
+
+	inventoryFlags.Usage = inventoryUsage
+	inventoryShowFlags.Usage = inventoryShowUsage
+	inventoryAddFlags.Usage = inventoryAddUsage
+	inventoryRemoveFlags.Usage = inventoryRemoveUsage
+
 	frontFlags.Usage = frontUsage
 	frontListItemsFlags.Usage = frontListItemsUsage
 
@@ -97,13 +123,6 @@ func ParseEndpoint(
 	itemAddFlags.Usage = itemAddUsage
 	itemUpdateFlags.Usage = itemUpdateUsage
 	itemRemoveFlags.Usage = itemRemoveUsage
-
-	characterFlags.Usage = characterUsage
-	characterListFlags.Usage = characterListUsage
-	characterShowFlags.Usage = characterShowUsage
-	characterAddFlags.Usage = characterAddUsage
-	characterUpdateFlags.Usage = characterUpdateUsage
-	characterRemoveFlags.Usage = characterRemoveUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -120,12 +139,14 @@ func ParseEndpoint(
 	{
 		svcn = flag.Arg(0)
 		switch svcn {
+		case "character":
+			svcf = characterFlags
+		case "inventory":
+			svcf = inventoryFlags
 		case "front":
 			svcf = frontFlags
 		case "item":
 			svcf = itemFlags
-		case "character":
-			svcf = characterFlags
 		default:
 			return nil, nil, fmt.Errorf("unknown service %q", svcn)
 		}
@@ -141,6 +162,38 @@ func ParseEndpoint(
 	{
 		epn = svcf.Arg(0)
 		switch svcn {
+		case "character":
+			switch epn {
+			case "list":
+				epf = characterListFlags
+
+			case "show":
+				epf = characterShowFlags
+
+			case "add":
+				epf = characterAddFlags
+
+			case "update":
+				epf = characterUpdateFlags
+
+			case "remove":
+				epf = characterRemoveFlags
+
+			}
+
+		case "inventory":
+			switch epn {
+			case "show":
+				epf = inventoryShowFlags
+
+			case "add":
+				epf = inventoryAddFlags
+
+			case "remove":
+				epf = inventoryRemoveFlags
+
+			}
+
 		case "front":
 			switch epn {
 			case "list-items":
@@ -167,25 +220,6 @@ func ParseEndpoint(
 
 			}
 
-		case "character":
-			switch epn {
-			case "list":
-				epf = characterListFlags
-
-			case "show":
-				epf = characterShowFlags
-
-			case "add":
-				epf = characterAddFlags
-
-			case "update":
-				epf = characterUpdateFlags
-
-			case "remove":
-				epf = characterRemoveFlags
-
-			}
-
 		}
 	}
 	if epf == nil {
@@ -206,6 +240,38 @@ func ParseEndpoint(
 	)
 	{
 		switch svcn {
+		case "character":
+			c := characterc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "list":
+				endpoint = c.List()
+				data = nil
+			case "show":
+				endpoint = c.Show()
+				data, err = characterc.BuildShowPayload(*characterShowIDFlag, *characterShowViewFlag)
+			case "add":
+				endpoint = c.Add()
+				data, err = characterc.BuildAddPayload(*characterAddBodyFlag)
+			case "update":
+				endpoint = c.Update()
+				data, err = characterc.BuildUpdatePayload(*characterUpdateBodyFlag, *characterUpdateIDFlag)
+			case "remove":
+				endpoint = c.Remove()
+				data, err = characterc.BuildRemovePayload(*characterRemoveIDFlag)
+			}
+		case "inventory":
+			c := inventoryc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "show":
+				endpoint = c.Show()
+				data, err = inventoryc.BuildShowPayload(*inventoryShowIDFlag)
+			case "add":
+				endpoint = c.Add()
+				data, err = inventoryc.BuildAddPayload(*inventoryAddBodyFlag)
+			case "remove":
+				endpoint = c.Remove()
+				data, err = inventoryc.BuildRemovePayload(*inventoryRemoveBodyFlag)
+			}
 		case "front":
 			c := frontc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
@@ -232,25 +298,6 @@ func ParseEndpoint(
 				endpoint = c.Remove()
 				data, err = itemc.BuildRemovePayload(*itemRemoveIDFlag)
 			}
-		case "character":
-			c := characterc.NewClient(scheme, host, doer, enc, dec, restore)
-			switch epn {
-			case "list":
-				endpoint = c.List()
-				data = nil
-			case "show":
-				endpoint = c.Show()
-				data, err = characterc.BuildShowPayload(*characterShowIDFlag, *characterShowViewFlag)
-			case "add":
-				endpoint = c.Add()
-				data, err = characterc.BuildAddPayload(*characterAddBodyFlag)
-			case "update":
-				endpoint = c.Update()
-				data, err = characterc.BuildUpdatePayload(*characterUpdateBodyFlag, *characterUpdateIDFlag)
-			case "remove":
-				endpoint = c.Remove()
-				data, err = characterc.BuildRemovePayload(*characterRemoveIDFlag)
-			}
 		}
 	}
 	if err != nil {
@@ -258,6 +305,147 @@ func ParseEndpoint(
 	}
 
 	return endpoint, data, nil
+}
+
+// characterUsage displays the usage of the character command and its
+// subcommands.
+func characterUsage() {
+	fmt.Fprintf(os.Stderr, `The character service is the service for managing characters
+Usage:
+    %[1]s [globalflags] character COMMAND [flags]
+
+COMMAND:
+    list: List all characters
+    show: Show character by ID
+    add: Add new character and return its ID
+    update: Update a character with the given ID
+    remove: Remove a character
+
+Additional help:
+    %[1]s character COMMAND --help
+`, os.Args[0])
+}
+func characterListUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character list
+
+List all characters
+
+Example:
+    %[1]s character list
+`, os.Args[0])
+}
+
+func characterShowUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character show -id STRING -view STRING
+
+Show character by ID
+    -id STRING: ID of character to show
+    -view STRING: 
+
+Example:
+    %[1]s character show --id "Sequi temporibus." --view "tiny"
+`, os.Args[0])
+}
+
+func characterAddUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character add -body JSON
+
+Add new character and return its ID
+    -body JSON: 
+
+Example:
+    %[1]s character add --body '{
+      "description": "A grizzled wizard with a penchant for mayhem and mead",
+      "experience": 36060,
+      "health": 1852,
+      "name": "Arvish the Wise"
+   }'
+`, os.Args[0])
+}
+
+func characterUpdateUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character update -body JSON -id STRING
+
+Update a character with the given ID
+    -body JSON: 
+    -id STRING: ID of the character to be updated
+
+Example:
+    %[1]s character update --body '{
+      "character": {
+         "description": "A grizzled wizard with a penchant for mayhem and mead",
+         "experience": 26032,
+         "health": 786,
+         "name": "Arvish the Wise"
+      }
+   }' --id "Qui deleniti dolore."
+`, os.Args[0])
+}
+
+func characterRemoveUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] character remove -id STRING
+
+Remove a character
+    -id STRING: ID of character to remove
+
+Example:
+    %[1]s character remove --id "Itaque expedita ex."
+`, os.Args[0])
+}
+
+// inventoryUsage displays the usage of the inventory command and its
+// subcommands.
+func inventoryUsage() {
+	fmt.Fprintf(os.Stderr, `The inventory service is the service for managing character inventories
+Usage:
+    %[1]s [globalflags] inventory COMMAND [flags]
+
+COMMAND:
+    show: Show the inventory for a character as a list of item IDs
+    add: Add an item ID to a character's inventory
+    remove: Remove an item ID from a character's inventory
+
+Additional help:
+    %[1]s inventory COMMAND --help
+`, os.Args[0])
+}
+func inventoryShowUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] inventory show -id STRING
+
+Show the inventory for a character as a list of item IDs
+    -id STRING: ID of the character
+
+Example:
+    %[1]s inventory show --id "Officia modi harum nulla mollitia quaerat."
+`, os.Args[0])
+}
+
+func inventoryAddUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] inventory add -body JSON
+
+Add an item ID to a character's inventory
+    -body JSON: 
+
+Example:
+    %[1]s inventory add --body '{
+      "id": "Est doloribus sequi qui animi in quia.",
+      "item_id": "Voluptas et non."
+   }'
+`, os.Args[0])
+}
+
+func inventoryRemoveUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] inventory remove -body JSON
+
+Remove an item ID from a character's inventory
+    -body JSON: 
+
+Example:
+    %[1]s inventory remove --body '{
+      "id": "Optio mollitia.",
+      "item_id": "Harum autem ipsam ratione atque voluptatibus."
+   }'
+`, os.Args[0])
 }
 
 // frontUsage displays the usage of the front command and its subcommands.
@@ -318,7 +506,7 @@ Show item by ID
     -view STRING: 
 
 Example:
-    %[1]s item show --id "Ex est omnis qui." --view "default"
+    %[1]s item show --id "Corrupti eos blanditiis quibusdam ullam." --view "tiny"
 `, os.Args[0])
 }
 
@@ -330,11 +518,11 @@ Add new item and return its ID
 
 Example:
     %[1]s item add --body '{
-      "damage": 2,
+      "damage": 149,
       "description": "A magnificent sword which grants the bearer +2 wisdom",
-      "healing": 75,
+      "healing": 52,
       "name": "Sword of Wisdom",
-      "protection": 10
+      "protection": 17
    }'
 `, os.Args[0])
 }
@@ -349,13 +537,13 @@ Update an item with the given ID
 Example:
     %[1]s item update --body '{
       "item": {
-         "damage": 49,
+         "damage": 99,
          "description": "A magnificent sword which grants the bearer +2 wisdom",
-         "healing": 103,
+         "healing": 57,
          "name": "Sword of Wisdom",
-         "protection": 12
+         "protection": 17
       }
-   }' --id "Quod qui aut id."
+   }' --id "Quia et iste accusamus veniam."
 `, os.Args[0])
 }
 
@@ -366,92 +554,6 @@ Remove an item
     -id STRING: ID of item to remove
 
 Example:
-    %[1]s item remove --id "Velit facilis."
-`, os.Args[0])
-}
-
-// characterUsage displays the usage of the character command and its
-// subcommands.
-func characterUsage() {
-	fmt.Fprintf(os.Stderr, `The character service is the service for managing characters
-Usage:
-    %[1]s [globalflags] character COMMAND [flags]
-
-COMMAND:
-    list: List all characters
-    show: Show character by ID
-    add: Add new character and return its ID
-    update: Update a character with the given ID
-    remove: Remove a character
-
-Additional help:
-    %[1]s character COMMAND --help
-`, os.Args[0])
-}
-func characterListUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character list
-
-List all characters
-
-Example:
-    %[1]s character list
-`, os.Args[0])
-}
-
-func characterShowUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character show -id STRING -view STRING
-
-Show character by ID
-    -id STRING: ID of character to show
-    -view STRING: 
-
-Example:
-    %[1]s character show --id "Expedita ex nihil consequatur quia harum earum." --view "tiny"
-`, os.Args[0])
-}
-
-func characterAddUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character add -body JSON
-
-Add new character and return its ID
-    -body JSON: 
-
-Example:
-    %[1]s character add --body '{
-      "description": "A grizzled wizard with a penchant for mayhem and mead",
-      "experience": 83494,
-      "health": 157,
-      "name": "Arvish the Wise"
-   }'
-`, os.Args[0])
-}
-
-func characterUpdateUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character update -body JSON -id STRING
-
-Update a character with the given ID
-    -body JSON: 
-    -id STRING: ID of the character to be updated
-
-Example:
-    %[1]s character update --body '{
-      "character": {
-         "description": "A grizzled wizard with a penchant for mayhem and mead",
-         "experience": 44185,
-         "health": 1543,
-         "name": "Arvish the Wise"
-      }
-   }' --id "Dolore ut qui in omnis."
-`, os.Args[0])
-}
-
-func characterRemoveUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] character remove -id STRING
-
-Remove a character
-    -id STRING: ID of character to remove
-
-Example:
-    %[1]s character remove --id "Sequi qui."
+    %[1]s item remove --id "Aspernatur qui culpa facilis."
 `, os.Args[0])
 }

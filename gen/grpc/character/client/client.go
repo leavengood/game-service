@@ -78,7 +78,15 @@ func (c *Client) Add() goa.Endpoint {
 			DecodeAddResponse)
 		res, err := inv.Invoke(ctx, v)
 		if err != nil {
-			return nil, goa.Fault(err.Error())
+			resp := goagrpc.DecodeError(err)
+			switch message := resp.(type) {
+			case *characterpb.AddNameTakenError:
+				return nil, NewAddNameTakenError(message)
+			case *goapb.ErrorResponse:
+				return nil, goagrpc.NewServiceError(message)
+			default:
+				return nil, goa.Fault(err.Error())
+			}
 		}
 		return res, nil
 	}
@@ -93,7 +101,17 @@ func (c *Client) Update() goa.Endpoint {
 			nil)
 		res, err := inv.Invoke(ctx, v)
 		if err != nil {
-			return nil, goa.Fault(err.Error())
+			resp := goagrpc.DecodeError(err)
+			switch message := resp.(type) {
+			case *characterpb.UpdateNotFoundError:
+				return nil, NewUpdateNotFoundError(message)
+			case *characterpb.UpdateNameTakenError:
+				return nil, NewUpdateNameTakenError(message)
+			case *goapb.ErrorResponse:
+				return nil, goagrpc.NewServiceError(message)
+			default:
+				return nil, goa.Fault(err.Error())
+			}
 		}
 		return res, nil
 	}
@@ -108,7 +126,15 @@ func (c *Client) Remove() goa.Endpoint {
 			nil)
 		res, err := inv.Invoke(ctx, v)
 		if err != nil {
-			return nil, goa.Fault(err.Error())
+			resp := goagrpc.DecodeError(err)
+			switch message := resp.(type) {
+			case *characterpb.RemoveNotFoundError:
+				return nil, NewRemoveNotFoundError(message)
+			case *goapb.ErrorResponse:
+				return nil, goagrpc.NewServiceError(message)
+			default:
+				return nil, goa.Fault(err.Error())
+			}
 		}
 		return res, nil
 	}

@@ -7,6 +7,7 @@ import (
 	game "game-service"
 	character "game-service/gen/character"
 	front "game-service/gen/front"
+	inventory "game-service/gen/inventory"
 	item "game-service/gen/item"
 	"log"
 	"net"
@@ -40,27 +41,31 @@ func main() {
 
 	// Initialize the services.
 	var (
+		characterSvc character.Service
+		inventorySvc inventory.Service
 		frontSvc     front.Service
 		itemSvc      item.Service
-		characterSvc character.Service
 	)
 	{
+		characterSvc = game.NewCharacter(logger)
+		inventorySvc = game.NewInventory(logger)
 		frontSvc = game.NewFront(logger)
 		itemSvc = game.NewItem(logger)
-		characterSvc = game.NewCharacter(logger)
 	}
 
 	// Wrap the services in endpoints that can be invoked from other services
 	// potentially running in different processes.
 	var (
+		characterEndpoints *character.Endpoints
+		inventoryEndpoints *inventory.Endpoints
 		frontEndpoints     *front.Endpoints
 		itemEndpoints      *item.Endpoints
-		characterEndpoints *character.Endpoints
 	)
 	{
+		characterEndpoints = character.NewEndpoints(characterSvc)
+		inventoryEndpoints = inventory.NewEndpoints(inventorySvc)
 		frontEndpoints = front.NewEndpoints(frontSvc)
 		itemEndpoints = item.NewEndpoints(itemSvc)
-		characterEndpoints = character.NewEndpoints(characterSvc)
 	}
 
 	// Create channel used by both the signal handler and server goroutines
@@ -102,7 +107,7 @@ func main() {
 			} else if u.Port() == "" {
 				u.Host = net.JoinHostPort(u.Host, "80")
 			}
-			handleHTTPServer(ctx, u, frontEndpoints, itemEndpoints, characterEndpoints, &wg, errc, logger, *dbgF)
+			handleHTTPServer(ctx, u, characterEndpoints, inventoryEndpoints, frontEndpoints, itemEndpoints, &wg, errc, logger, *dbgF)
 		}
 
 		{
@@ -126,7 +131,7 @@ func main() {
 			} else if u.Port() == "" {
 				u.Host = net.JoinHostPort(u.Host, "8080")
 			}
-			handleGRPCServer(ctx, u, frontEndpoints, itemEndpoints, characterEndpoints, &wg, errc, logger, *dbgF)
+			handleGRPCServer(ctx, u, characterEndpoints, inventoryEndpoints, frontEndpoints, itemEndpoints, &wg, errc, logger, *dbgF)
 		}
 
 	default:
