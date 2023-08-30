@@ -76,6 +76,24 @@ type ShowNotFoundResponseBody struct {
 	ID string `form:"id" json:"id" xml:"id"`
 }
 
+// AddNameTakenResponseBody is the type of the "item" service "add" endpoint
+// HTTP response body for the "name_taken" error.
+type AddNameTakenResponseBody struct {
+	// name taken
+	Message string `form:"message" json:"message" xml:"message"`
+	// name that is not unique
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
+// UpdateNameTakenResponseBody is the type of the "item" service "update"
+// endpoint HTTP response body for the "name_taken" error.
+type UpdateNameTakenResponseBody struct {
+	// name taken
+	Message string `form:"message" json:"message" xml:"message"`
+	// name that is not unique
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
 // UpdateNotFoundResponseBody is the type of the "item" service "update"
 // endpoint HTTP response body for the "not_found" error.
 type UpdateNotFoundResponseBody struct {
@@ -164,6 +182,26 @@ func NewShowNotFoundResponseBody(res *item.NotFound) *ShowNotFoundResponseBody {
 	body := &ShowNotFoundResponseBody{
 		Message: res.Message,
 		ID:      res.ID,
+	}
+	return body
+}
+
+// NewAddNameTakenResponseBody builds the HTTP response body from the result of
+// the "add" endpoint of the "item" service.
+func NewAddNameTakenResponseBody(res *item.NameTaken) *AddNameTakenResponseBody {
+	body := &AddNameTakenResponseBody{
+		Message: res.Message,
+		Name:    res.Name,
+	}
+	return body
+}
+
+// NewUpdateNameTakenResponseBody builds the HTTP response body from the result
+// of the "update" endpoint of the "item" service.
+func NewUpdateNameTakenResponseBody(res *item.NameTaken) *UpdateNameTakenResponseBody {
+	body := &UpdateNameTakenResponseBody{
+		Message: res.Message,
+		Name:    res.Name,
 	}
 	return body
 }

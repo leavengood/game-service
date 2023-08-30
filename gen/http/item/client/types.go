@@ -67,6 +67,24 @@ type ShowNotFoundResponseBody struct {
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 }
 
+// AddNameTakenResponseBody is the type of the "item" service "add" endpoint
+// HTTP response body for the "name_taken" error.
+type AddNameTakenResponseBody struct {
+	// name taken
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// name that is not unique
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
+// UpdateNameTakenResponseBody is the type of the "item" service "update"
+// endpoint HTTP response body for the "name_taken" error.
+type UpdateNameTakenResponseBody struct {
+	// name taken
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// name that is not unique
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+}
+
 // UpdateNotFoundResponseBody is the type of the "item" service "update"
 // endpoint HTTP response body for the "not_found" error.
 type UpdateNotFoundResponseBody struct {
@@ -174,6 +192,26 @@ func NewShowNotFound(body *ShowNotFoundResponseBody) *item.NotFound {
 	return v
 }
 
+// NewAddNameTaken builds a item service add endpoint name_taken error.
+func NewAddNameTaken(body *AddNameTakenResponseBody) *item.NameTaken {
+	v := &item.NameTaken{
+		Message: *body.Message,
+		Name:    *body.Name,
+	}
+
+	return v
+}
+
+// NewUpdateNameTaken builds a item service update endpoint name_taken error.
+func NewUpdateNameTaken(body *UpdateNameTakenResponseBody) *item.NameTaken {
+	v := &item.NameTaken{
+		Message: *body.Message,
+		Name:    *body.Name,
+	}
+
+	return v
+}
+
 // NewUpdateNotFound builds a item service update endpoint not_found error.
 func NewUpdateNotFound(body *UpdateNotFoundResponseBody) *item.NotFound {
 	v := &item.NotFound{
@@ -202,6 +240,30 @@ func ValidateShowNotFoundResponseBody(body *ShowNotFoundResponseBody) (err error
 	}
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	return
+}
+
+// ValidateAddNameTakenResponseBody runs the validations defined on
+// add_name_taken_response_body
+func ValidateAddNameTakenResponseBody(body *AddNameTakenResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	return
+}
+
+// ValidateUpdateNameTakenResponseBody runs the validations defined on
+// update_name_taken_response_body
+func ValidateUpdateNameTakenResponseBody(body *UpdateNameTakenResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
 	return
 }

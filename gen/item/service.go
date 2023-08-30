@@ -53,6 +53,14 @@ type Item struct {
 	Protection uint32
 }
 
+// NameTaken is the type returned when a name for an API object already exists
+type NameTaken struct {
+	// name taken
+	Message string
+	// name that is not unique
+	Name string
+}
+
 // NotFound is the type returned when attempting to show, update or delete an
 // API object that does not exist
 type NotFound struct {
@@ -101,6 +109,23 @@ type UpdatePayload struct {
 	ID string
 	// Item with updated fields
 	Item *Item
+}
+
+// Error returns an error description.
+func (e *NameTaken) Error() string {
+	return "NameTaken is the type returned when a name for an API object already exists"
+}
+
+// ErrorName returns "NameTaken".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e *NameTaken) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "NameTaken".
+func (e *NameTaken) GoaErrorName() string {
+	return "name_taken"
 }
 
 // Error returns an error description.

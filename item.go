@@ -77,7 +77,7 @@ func (s *itemsrvc) Show(ctx context.Context, p *item.ShowPayload) (res *item.Sto
 
 	if res == nil {
 		s.logger.Print("item.show: returning not found error")
-		return res, view, notFound(p.ID)
+		return res, view, itemNotFound(p.ID)
 	}
 
 	return res, view, nil
@@ -86,6 +86,10 @@ func (s *itemsrvc) Show(ctx context.Context, p *item.ShowPayload) (res *item.Sto
 // Add new item and return its ID
 func (s *itemsrvc) Add(ctx context.Context, it *item.Item) (string, error) {
 	s.logger.Print("item.add")
+
+	if err := s.checkNameUniqueness(it.Name); err != nil {
+		return "", err
+	}
 
 	id := uuid.NewString()
 	stored := &item.StoredItem{
@@ -116,12 +120,17 @@ func (s *itemsrvc) Update(ctx context.Context, u *item.UpdatePayload) error {
 		}
 	}
 	if existing == nil {
-		return notFound(u.ID)
+		return itemNotFound(u.ID)
 	}
 
 	// Perform the update
 	newItem := u.Item
-	existing.Name = newItem.Name
+	if existing.Name != "" {
+		if err := s.checkNameUniqueness(u.Item.Name); err != nil {
+			return err
+		}
+		existing.Name = newItem.Name
+	}
 	if newItem.Description != nil {
 		existing.Description = newItem.Description
 	}
@@ -166,7 +175,7 @@ func (s *itemsrvc) Remove(ctx context.Context, p *item.RemovePayload) error {
 	}
 
 	if !found {
-		return notFound(p.ID)
+		return itemNotFound(p.ID)
 	}
 
 	s.items = newItems
@@ -174,7 +183,20 @@ func (s *itemsrvc) Remove(ctx context.Context, p *item.RemovePayload) error {
 	return nil
 }
 
-func notFound(id string) error {
+func (s *itemsrvc) checkNameUniqueness(name string) error {
+	// This is not very efficient but in real code we would have a database with indexes
+	for _, i := range s.items {
+		if i.Name == name {
+			return &item.NameTaken{
+				Message: "an item with that name already exists",
+				Name:    name,
+			}
+		}
+	}
+	return nil
+}
+
+func itemNotFound(id string) error {
 	return &item.NotFound{
 		Message: "could not find an item with this ID",
 		ID:      id,

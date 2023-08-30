@@ -13,6 +13,146 @@ produces:
     - application/xml
     - application/gob
 paths:
+    /back/characters:
+        get:
+            tags:
+                - character
+            summary: list character
+            description: List all characters
+            operationId: character#list
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        $ref: '#/definitions/CharacterStoredCharacterResponseCollection'
+            schemes:
+                - http
+        post:
+            tags:
+                - character
+            summary: add character
+            description: Add new character and return its ID
+            operationId: character#add
+            parameters:
+                - name: AddRequestBody
+                  in: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/CharacterAddRequestBody'
+                    required:
+                        - name
+                        - health
+            responses:
+                "201":
+                    description: Created response.
+                    schema:
+                        type: string
+                "409":
+                    description: Conflict response.
+                    schema:
+                        $ref: '#/definitions/CharacterAddNameTakenResponseBody'
+                        required:
+                            - message
+                            - name
+            schemes:
+                - http
+    /back/characters/{id}:
+        get:
+            tags:
+                - character
+            summary: show character
+            description: Show character by ID
+            operationId: character#show
+            parameters:
+                - name: view
+                  in: query
+                  description: View to render
+                  required: false
+                  type: string
+                  enum:
+                    - default
+                    - tiny
+                - name: id
+                  in: path
+                  description: ID of character to show
+                  required: true
+                  type: string
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        $ref: '#/definitions/CharacterShowResponseBody'
+                "404":
+                    description: Not Found response.
+                    schema:
+                        $ref: '#/definitions/CharacterShowNotFoundResponseBody'
+                        required:
+                            - message
+                            - id
+            schemes:
+                - http
+        put:
+            tags:
+                - character
+            summary: update character
+            description: Update a character with the given ID
+            operationId: character#update
+            parameters:
+                - name: id
+                  in: path
+                  description: ID of the character to be updated
+                  required: true
+                  type: string
+                - name: UpdateRequestBody
+                  in: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/CharacterUpdateRequestBody'
+                    required:
+                        - character
+            responses:
+                "204":
+                    description: No Content response.
+                "404":
+                    description: Not Found response.
+                    schema:
+                        $ref: '#/definitions/CharacterUpdateNotFoundResponseBody'
+                        required:
+                            - message
+                            - id
+                "409":
+                    description: Conflict response.
+                    schema:
+                        $ref: '#/definitions/CharacterUpdateNameTakenResponseBody'
+                        required:
+                            - message
+                            - name
+            schemes:
+                - http
+        delete:
+            tags:
+                - character
+            summary: remove character
+            description: Remove a character
+            operationId: character#remove
+            parameters:
+                - name: id
+                  in: path
+                  description: ID of character to remove
+                  required: true
+                  type: string
+            responses:
+                "204":
+                    description: No Content response.
+                "404":
+                    description: Not Found response.
+                    schema:
+                        $ref: '#/definitions/CharacterRemoveNotFoundResponseBody'
+                        required:
+                            - message
+                            - id
+            schemes:
+                - http
     /back/items:
         get:
             tags:
@@ -49,6 +189,13 @@ paths:
                     description: Created response.
                     schema:
                         type: string
+                "409":
+                    description: Conflict response.
+                    schema:
+                        $ref: '#/definitions/ItemAddNameTakenResponseBody'
+                        required:
+                            - message
+                            - name
             schemes:
                 - http
     /back/items/{id}:
@@ -115,6 +262,13 @@ paths:
                         required:
                             - message
                             - id
+                "409":
+                    description: Conflict response.
+                    schema:
+                        $ref: '#/definitions/ItemUpdateNameTakenResponseBody'
+                        required:
+                            - message
+                            - name
             schemes:
                 - http
         delete:
@@ -156,6 +310,248 @@ paths:
             schemes:
                 - http
 definitions:
+    CharacterAddNameTakenResponseBody:
+        title: CharacterAddNameTakenResponseBody
+        type: object
+        properties:
+            message:
+                type: string
+                description: name taken
+                example: Suscipit fugit consequatur voluptatum.
+            name:
+                type: string
+                description: name that is not unique
+                example: Consequatur quisquam impedit.
+        description: name is taken
+        example:
+            message: Molestiae eos totam quo totam nemo.
+            name: Voluptatem praesentium qui.
+        required:
+            - message
+            - name
+    CharacterAddRequestBody:
+        title: CharacterAddRequestBody
+        type: object
+        properties:
+            description:
+                type: string
+                description: Description of the character
+                example: A grizzled wizard with a penchant for mayhem and mead
+                maxLength: 2000
+            experience:
+                type: integer
+                description: Amount of experience the character has
+                example: 65720
+                minimum: 0
+                maximum: 100000
+            health:
+                type: integer
+                description: Amount of health the character has
+                example: 619
+                minimum: 0
+                maximum: 2000
+            name:
+                type: string
+                description: Name of the character
+                example: Arvish the Wise
+                maxLength: 100
+        example:
+            description: A grizzled wizard with a penchant for mayhem and mead
+            experience: 67260
+            health: 1493
+            name: Arvish the Wise
+        required:
+            - name
+            - health
+    CharacterRemoveNotFoundResponseBody:
+        title: CharacterRemoveNotFoundResponseBody
+        type: object
+        properties:
+            id:
+                type: string
+                description: ID of missing item
+                example: Illo sapiente.
+            message:
+                type: string
+                description: not found
+                example: Qui qui.
+        description: character not found
+        example:
+            id: Non dicta.
+            message: Quibusdam atque.
+        required:
+            - message
+            - id
+    CharacterRequestBody:
+        title: CharacterRequestBody
+        type: object
+        properties:
+            description:
+                type: string
+                description: Description of the character
+                example: A grizzled wizard with a penchant for mayhem and mead
+                maxLength: 2000
+            experience:
+                type: integer
+                description: Amount of experience the character has
+                example: 45777
+                minimum: 0
+                maximum: 100000
+            health:
+                type: integer
+                description: Amount of health the character has
+                example: 584
+                minimum: 0
+                maximum: 2000
+            name:
+                type: string
+                description: Name of the character
+                example: Arvish the Wise
+                maxLength: 100
+        description: Character describes a character in the game
+        example:
+            description: A grizzled wizard with a penchant for mayhem and mead
+            experience: 34592
+            health: 656
+            name: Arvish the Wise
+        required:
+            - name
+            - health
+    CharacterShowNotFoundResponseBody:
+        title: CharacterShowNotFoundResponseBody
+        type: object
+        properties:
+            id:
+                type: string
+                description: ID of missing item
+                example: Voluptatum modi enim consequatur minus nisi voluptate.
+            message:
+                type: string
+                description: not found
+                example: Nisi in sequi quis quo.
+        description: character not found
+        example:
+            id: Veritatis nihil.
+            message: Modi blanditiis possimus consequatur suscipit sequi.
+        required:
+            - message
+            - id
+    CharacterShowResponseBody:
+        title: 'Mediatype identifier: application/vnd.game.stored-character; view=default'
+        type: object
+        properties:
+            description:
+                type: string
+                description: Description of the character
+                example: A grizzled wizard with a penchant for mayhem and mead
+                maxLength: 2000
+            experience:
+                type: integer
+                description: Amount of experience the character has
+                example: 3692
+                minimum: 0
+                maximum: 100000
+            health:
+                type: integer
+                description: Amount of health the character has
+                example: 402
+                minimum: 0
+                maximum: 2000
+            id:
+                type: string
+                description: ID is the unique id of the character.
+                example: 123abc
+            name:
+                type: string
+                description: Name of the character
+                example: Arvish the Wise
+                maxLength: 100
+        description: ShowResponseBody result type (default view)
+        example:
+            description: A grizzled wizard with a penchant for mayhem and mead
+            experience: 8727
+            health: 460
+            id: 123abc
+            name: Arvish the Wise
+        required:
+            - id
+            - name
+            - health
+            - experience
+    CharacterStoredCharacterResponseCollection:
+        title: 'Mediatype identifier: application/vnd.game.stored-character; type=collection; view=default'
+        type: array
+        items:
+            $ref: '#/definitions/StoredCharacterResponse'
+        description: ListResponseBody is the result type for an array of StoredCharacterResponse (default view)
+        example:
+            - description: A grizzled wizard with a penchant for mayhem and mead
+              experience: 47735
+              health: 495
+              id: 123abc
+              name: Arvish the Wise
+            - description: A grizzled wizard with a penchant for mayhem and mead
+              experience: 47735
+              health: 495
+              id: 123abc
+              name: Arvish the Wise
+            - description: A grizzled wizard with a penchant for mayhem and mead
+              experience: 47735
+              health: 495
+              id: 123abc
+              name: Arvish the Wise
+    CharacterUpdateNameTakenResponseBody:
+        title: CharacterUpdateNameTakenResponseBody
+        type: object
+        properties:
+            message:
+                type: string
+                description: name taken
+                example: Vel voluptas sunt ducimus quidem reprehenderit assumenda.
+            name:
+                type: string
+                description: name that is not unique
+                example: Blanditiis enim aperiam quibusdam ut.
+        description: name is taken
+        example:
+            message: Eveniet enim fugit hic rerum consectetur distinctio.
+            name: Et deleniti omnis veritatis dolor cumque animi.
+        required:
+            - message
+            - name
+    CharacterUpdateNotFoundResponseBody:
+        title: CharacterUpdateNotFoundResponseBody
+        type: object
+        properties:
+            id:
+                type: string
+                description: ID of missing item
+                example: Et consequatur tempore quasi sint cumque ad.
+            message:
+                type: string
+                description: not found
+                example: Veniam voluptas quidem quas.
+        description: character not found
+        example:
+            id: Fugit et quis dolorem perferendis.
+            message: Magni nostrum eum voluptates voluptatum.
+        required:
+            - message
+            - id
+    CharacterUpdateRequestBody:
+        title: CharacterUpdateRequestBody
+        type: object
+        properties:
+            character:
+                $ref: '#/definitions/CharacterRequestBody'
+        example:
+            character:
+                description: A grizzled wizard with a penchant for mayhem and mead
+                experience: 44185
+                health: 1543
+                name: Arvish the Wise
+        required:
+            - character
     FrontStoredItemResponseCollection:
         title: 'Mediatype identifier: application/vnd.game.stored-item; type=collection; view=default'
         type: array
@@ -163,18 +559,37 @@ definitions:
             $ref: '#/definitions/StoredItemResponse'
         description: List-ItemsResponseBody is the result type for an array of StoredItemResponse (default view)
         example:
-            - damage: 40
+            - damage: 123
               description: A magnificent sword which grants the bearer +2 wisdom
-              healing: 36
+              healing: 17
               id: 123abc
               name: Sword of Wisdom
-              protection: 13
-            - damage: 40
+              protection: 18
+            - damage: 123
               description: A magnificent sword which grants the bearer +2 wisdom
-              healing: 36
+              healing: 17
               id: 123abc
               name: Sword of Wisdom
-              protection: 13
+              protection: 18
+    ItemAddNameTakenResponseBody:
+        title: ItemAddNameTakenResponseBody
+        type: object
+        properties:
+            message:
+                type: string
+                description: name taken
+                example: Aliquid beatae alias commodi cupiditate molestiae tempore.
+            name:
+                type: string
+                description: name that is not unique
+                example: Dignissimos quia sed repellat sit dolorum autem.
+        description: name is taken
+        example:
+            message: Veritatis perferendis.
+            name: Consequatur voluptas doloremque.
+        required:
+            - message
+            - name
     ItemAddRequestBody:
         title: ItemAddRequestBody
         type: object
@@ -182,7 +597,7 @@ definitions:
             damage:
                 type: integer
                 description: Amount of damage the item can do
-                example: 102
+                example: 186
                 minimum: 0
                 maximum: 200
             description:
@@ -193,69 +608,7 @@ definitions:
             healing:
                 type: integer
                 description: Amount of healing the item can provide
-                example: 104
-                minimum: 0
-                maximum: 200
-            name:
-                type: string
-                description: Name of item
-                example: Sword of Wisdom
-                maxLength: 100
-            protection:
-                type: integer
-                description: Amount of protection the item can provide
-                example: 10
-                minimum: 0
-                maximum: 20
-        example:
-            damage: 74
-            description: A magnificent sword which grants the bearer +2 wisdom
-            healing: 1
-            name: Sword of Wisdom
-            protection: 15
-        required:
-            - name
-            - damage
-            - healing
-            - protection
-    ItemRemoveNotFoundResponseBody:
-        title: ItemRemoveNotFoundResponseBody
-        type: object
-        properties:
-            id:
-                type: string
-                description: ID of missing item
-                example: Nihil animi minus voluptatem.
-            message:
-                type: string
-                description: not found
-                example: Omnis non accusamus consequatur voluptatum officia iusto.
-        description: Item not found
-        example:
-            id: Maiores vitae odit rerum.
-            message: Quam facere.
-        required:
-            - message
-            - id
-    ItemRequestBody:
-        title: ItemRequestBody
-        type: object
-        properties:
-            damage:
-                type: integer
-                description: Amount of damage the item can do
-                example: 143
-                minimum: 0
-                maximum: 200
-            description:
-                type: string
-                description: Description of item
-                example: A magnificent sword which grants the bearer +2 wisdom
-                maxLength: 2000
-            healing:
-                type: integer
-                description: Amount of healing the item can provide
-                example: 185
+                example: 146
                 minimum: 0
                 maximum: 200
             name:
@@ -269,39 +622,38 @@ definitions:
                 example: 7
                 minimum: 0
                 maximum: 20
-        description: Item describes an item in a player's inventory
         example:
-            damage: 177
+            damage: 108
             description: A magnificent sword which grants the bearer +2 wisdom
-            healing: 168
+            healing: 83
             name: Sword of Wisdom
-            protection: 18
+            protection: 19
         required:
             - name
             - damage
             - healing
             - protection
-    ItemShowNotFoundResponseBody:
-        title: ItemShowNotFoundResponseBody
+    ItemRemoveNotFoundResponseBody:
+        title: ItemRemoveNotFoundResponseBody
         type: object
         properties:
             id:
                 type: string
                 description: ID of missing item
-                example: Expedita ex nihil consequatur quia harum earum.
+                example: Aperiam ut voluptatem sunt.
             message:
                 type: string
                 description: not found
-                example: Nulla dicta ipsa.
+                example: Aliquid possimus optio eum rerum blanditiis consequatur.
         description: Item not found
         example:
-            id: Quaerat atque enim molestias modi harum.
-            message: Vero velit.
+            id: Sunt omnis provident.
+            message: Quisquam quam.
         required:
             - message
             - id
-    ItemShowResponseBody:
-        title: 'Mediatype identifier: application/vnd.game.stored-item; view=default'
+    ItemRequestBody:
+        title: ItemRequestBody
         type: object
         properties:
             damage:
@@ -318,7 +670,70 @@ definitions:
             healing:
                 type: integer
                 description: Amount of healing the item can provide
-                example: 75
+                example: 176
+                minimum: 0
+                maximum: 200
+            name:
+                type: string
+                description: Name of item
+                example: Sword of Wisdom
+                maxLength: 100
+            protection:
+                type: integer
+                description: Amount of protection the item can provide
+                example: 6
+                minimum: 0
+                maximum: 20
+        description: Item describes an item in a player's inventory
+        example:
+            damage: 90
+            description: A magnificent sword which grants the bearer +2 wisdom
+            healing: 192
+            name: Sword of Wisdom
+            protection: 5
+        required:
+            - name
+            - damage
+            - healing
+            - protection
+    ItemShowNotFoundResponseBody:
+        title: ItemShowNotFoundResponseBody
+        type: object
+        properties:
+            id:
+                type: string
+                description: ID of missing item
+                example: Autem sed.
+            message:
+                type: string
+                description: not found
+                example: Repudiandae aspernatur qui culpa facilis.
+        description: Item not found
+        example:
+            id: Vel eligendi perferendis et at voluptatum nam.
+            message: Libero deleniti quo culpa.
+        required:
+            - message
+            - id
+    ItemShowResponseBody:
+        title: 'Mediatype identifier: application/vnd.game.stored-item; view=default'
+        type: object
+        properties:
+            damage:
+                type: integer
+                description: Amount of damage the item can do
+                example: 93
+                minimum: 0
+                maximum: 200
+            description:
+                type: string
+                description: Description of item
+                example: A magnificent sword which grants the bearer +2 wisdom
+                maxLength: 2000
+            healing:
+                type: integer
+                description: Amount of healing the item can provide
+                example: 98
                 minimum: 0
                 maximum: 200
             id:
@@ -333,17 +748,17 @@ definitions:
             protection:
                 type: integer
                 description: Amount of protection the item can provide
-                example: 19
+                example: 1
                 minimum: 0
                 maximum: 20
         description: ShowResponseBody result type (default view)
         example:
-            damage: 95
+            damage: 111
             description: A magnificent sword which grants the bearer +2 wisdom
-            healing: 135
+            healing: 5
             id: 123abc
             name: Sword of Wisdom
-            protection: 13
+            protection: 11
         required:
             - id
             - name
@@ -357,24 +772,43 @@ definitions:
             $ref: '#/definitions/StoredItemResponse'
         description: ListResponseBody is the result type for an array of StoredItemResponse (default view)
         example:
-            - damage: 40
+            - damage: 123
               description: A magnificent sword which grants the bearer +2 wisdom
-              healing: 36
+              healing: 17
               id: 123abc
               name: Sword of Wisdom
-              protection: 13
-            - damage: 40
+              protection: 18
+            - damage: 123
               description: A magnificent sword which grants the bearer +2 wisdom
-              healing: 36
+              healing: 17
               id: 123abc
               name: Sword of Wisdom
-              protection: 13
-            - damage: 40
+              protection: 18
+            - damage: 123
               description: A magnificent sword which grants the bearer +2 wisdom
-              healing: 36
+              healing: 17
               id: 123abc
               name: Sword of Wisdom
-              protection: 13
+              protection: 18
+    ItemUpdateNameTakenResponseBody:
+        title: ItemUpdateNameTakenResponseBody
+        type: object
+        properties:
+            message:
+                type: string
+                description: name taken
+                example: Aut cumque fugit ipsa debitis dolor.
+            name:
+                type: string
+                description: name that is not unique
+                example: Culpa atque.
+        description: name is taken
+        example:
+            message: Quia perspiciatis nulla.
+            name: Et vel ea.
+        required:
+            - message
+            - name
     ItemUpdateNotFoundResponseBody:
         title: ItemUpdateNotFoundResponseBody
         type: object
@@ -382,15 +816,15 @@ definitions:
             id:
                 type: string
                 description: ID of missing item
-                example: Non id magnam nam consequatur.
+                example: Assumenda dolor deleniti perspiciatis sed minima ipsa.
             message:
                 type: string
                 description: not found
-                example: Quaerat eveniet aperiam voluptatem ipsam est.
+                example: Atque velit repellendus minima.
         description: Item not found
         example:
-            id: Natus assumenda saepe.
-            message: Totam at consectetur aut sunt ratione illo.
+            id: Corporis nemo iure ipsa accusantium.
+            message: Qui alias accusamus.
         required:
             - message
             - id
@@ -402,13 +836,55 @@ definitions:
                 $ref: '#/definitions/ItemRequestBody'
         example:
             item:
-                damage: 154
+                damage: 49
                 description: A magnificent sword which grants the bearer +2 wisdom
-                healing: 39
+                healing: 103
                 name: Sword of Wisdom
-                protection: 14
+                protection: 12
         required:
             - item
+    StoredCharacterResponse:
+        title: 'Mediatype identifier: application/vnd.game.stored-character; view=default'
+        type: object
+        properties:
+            description:
+                type: string
+                description: Description of the character
+                example: A grizzled wizard with a penchant for mayhem and mead
+                maxLength: 2000
+            experience:
+                type: integer
+                description: Amount of experience the character has
+                example: 59701
+                minimum: 0
+                maximum: 100000
+            health:
+                type: integer
+                description: Amount of health the character has
+                example: 714
+                minimum: 0
+                maximum: 2000
+            id:
+                type: string
+                description: ID is the unique id of the character.
+                example: 123abc
+            name:
+                type: string
+                description: Name of the character
+                example: Arvish the Wise
+                maxLength: 100
+        description: A StoredCharacter describes an character stored with an ID (default view)
+        example:
+            description: A grizzled wizard with a penchant for mayhem and mead
+            experience: 20080
+            health: 1798
+            id: 123abc
+            name: Arvish the Wise
+        required:
+            - id
+            - name
+            - health
+            - experience
     StoredItemResponse:
         title: 'Mediatype identifier: application/vnd.game.stored-item; view=default'
         type: object
@@ -416,7 +892,7 @@ definitions:
             damage:
                 type: integer
                 description: Amount of damage the item can do
-                example: 127
+                example: 0
                 minimum: 0
                 maximum: 200
             description:
@@ -427,7 +903,7 @@ definitions:
             healing:
                 type: integer
                 description: Amount of healing the item can provide
-                example: 127
+                example: 55
                 minimum: 0
                 maximum: 200
             id:
@@ -442,17 +918,17 @@ definitions:
             protection:
                 type: integer
                 description: Amount of protection the item can provide
-                example: 9
+                example: 4
                 minimum: 0
                 maximum: 20
         description: A StoredItem describes an item stored with an ID (default view)
         example:
-            damage: 185
+            damage: 2
             description: A magnificent sword which grants the bearer +2 wisdom
-            healing: 182
+            healing: 23
             id: 123abc
             name: Sword of Wisdom
-            protection: 12
+            protection: 4
         required:
             - id
             - name

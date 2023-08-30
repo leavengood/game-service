@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	game "game-service"
+	character "game-service/gen/character"
 	front "game-service/gen/front"
 	item "game-service/gen/item"
 	"log"
@@ -39,23 +40,27 @@ func main() {
 
 	// Initialize the services.
 	var (
-		frontSvc front.Service
-		itemSvc  item.Service
+		frontSvc     front.Service
+		itemSvc      item.Service
+		characterSvc character.Service
 	)
 	{
 		frontSvc = game.NewFront(logger)
 		itemSvc = game.NewItem(logger)
+		characterSvc = game.NewCharacter(logger)
 	}
 
 	// Wrap the services in endpoints that can be invoked from other services
 	// potentially running in different processes.
 	var (
-		frontEndpoints *front.Endpoints
-		itemEndpoints  *item.Endpoints
+		frontEndpoints     *front.Endpoints
+		itemEndpoints      *item.Endpoints
+		characterEndpoints *character.Endpoints
 	)
 	{
 		frontEndpoints = front.NewEndpoints(frontSvc)
 		itemEndpoints = item.NewEndpoints(itemSvc)
+		characterEndpoints = character.NewEndpoints(characterSvc)
 	}
 
 	// Create channel used by both the signal handler and server goroutines
@@ -97,7 +102,7 @@ func main() {
 			} else if u.Port() == "" {
 				u.Host = net.JoinHostPort(u.Host, "80")
 			}
-			handleHTTPServer(ctx, u, frontEndpoints, itemEndpoints, &wg, errc, logger, *dbgF)
+			handleHTTPServer(ctx, u, frontEndpoints, itemEndpoints, characterEndpoints, &wg, errc, logger, *dbgF)
 		}
 
 		{
@@ -121,7 +126,7 @@ func main() {
 			} else if u.Port() == "" {
 				u.Host = net.JoinHostPort(u.Host, "8080")
 			}
-			handleGRPCServer(ctx, u, frontEndpoints, itemEndpoints, &wg, errc, logger, *dbgF)
+			handleGRPCServer(ctx, u, frontEndpoints, itemEndpoints, characterEndpoints, &wg, errc, logger, *dbgF)
 		}
 
 	default:

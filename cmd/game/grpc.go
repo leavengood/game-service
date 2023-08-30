@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	character "game-service/gen/character"
 	front "game-service/gen/front"
+	characterpb "game-service/gen/grpc/character/pb"
+	charactersvr "game-service/gen/grpc/character/server"
 	frontpb "game-service/gen/grpc/front/pb"
 	frontsvr "game-service/gen/grpc/front/server"
 	itempb "game-service/gen/grpc/item/pb"
@@ -21,7 +24,7 @@ import (
 
 // handleGRPCServer starts configures and starts a gRPC server on the given
 // URL. It shuts down the server if any error is received in the error channel.
-func handleGRPCServer(ctx context.Context, u *url.URL, frontEndpoints *front.Endpoints, itemEndpoints *item.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
+func handleGRPCServer(ctx context.Context, u *url.URL, frontEndpoints *front.Endpoints, itemEndpoints *item.Endpoints, characterEndpoints *character.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
 
 	// Setup goa log adapter.
 	var (
@@ -36,12 +39,14 @@ func handleGRPCServer(ctx context.Context, u *url.URL, frontEndpoints *front.End
 	// the service input and output data structures to gRPC requests and
 	// responses.
 	var (
-		frontServer *frontsvr.Server
-		itemServer  *itemsvr.Server
+		frontServer     *frontsvr.Server
+		itemServer      *itemsvr.Server
+		characterServer *charactersvr.Server
 	)
 	{
 		frontServer = frontsvr.New(frontEndpoints, nil)
 		itemServer = itemsvr.New(itemEndpoints, nil)
+		characterServer = charactersvr.New(characterEndpoints, nil)
 	}
 
 	// Initialize gRPC server with the middleware.
@@ -55,6 +60,7 @@ func handleGRPCServer(ctx context.Context, u *url.URL, frontEndpoints *front.End
 	// Register the servers.
 	frontpb.RegisterFrontServer(srv, frontServer)
 	itempb.RegisterItemServer(srv, itemServer)
+	characterpb.RegisterCharacterServer(srv, characterServer)
 
 	for svc, info := range srv.GetServiceInfo() {
 		for _, m := range info.Methods {

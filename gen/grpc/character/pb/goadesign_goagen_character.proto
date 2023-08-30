@@ -1,0 +1,115 @@
+// Code generated with goa v3.12.4, DO NOT EDIT.
+//
+// character protocol buffer definition
+//
+// Command:
+// $ goa gen game-service/design
+
+syntax = "proto3";
+
+package character;
+
+option go_package = "/characterpb";
+
+// The character service is the service for managing characters
+service Character {
+	// List all characters
+	rpc List (ListRequest) returns (StoredCharacterCollection);
+	// Show character by ID
+	rpc Show (ShowRequest) returns (ShowResponse);
+	// Add new character and return its ID
+	rpc Add (AddRequest) returns (AddResponse);
+	// Update a character with the given ID
+	rpc Update (UpdateRequest) returns (UpdateResponse);
+	// Remove a character
+	rpc Remove (RemoveRequest) returns (RemoveResponse);
+}
+
+message ListRequest {
+}
+
+message StoredCharacterCollection {
+	repeated StoredCharacter field = 1;
+}
+// A StoredCharacter describes an character stored with an ID
+message StoredCharacter {
+	// ID is the unique id of the character.
+	string id = 6;
+	// Name of the character
+	string name = 2;
+	// Description of the character
+	optional string description = 3;
+	// Amount of health the character has
+	uint32 health = 4;
+	// Amount of experience the character has
+	uint32 experience = 5;
+}
+
+message ShowNotFoundError {
+	// not found
+	string message_ = 1;
+	// ID of missing item
+	string id = 2;
+}
+
+message ShowRequest {
+	// ID of character to show
+	string id = 1;
+}
+
+message ShowResponse {
+	// ID is the unique id of the character.
+	string id = 6;
+	// Name of the character
+	string name = 2;
+	// Description of the character
+	optional string description = 3;
+	// Amount of health the character has
+	uint32 health = 4;
+	// Amount of experience the character has
+	uint32 experience = 5;
+}
+
+message AddRequest {
+	// Name of the character
+	string name = 1;
+	// Description of the character
+	optional string description = 2;
+	// Amount of health the character has
+	uint32 health = 3;
+	// Amount of experience the character has
+	optional uint32 experience = 4;
+}
+
+message AddResponse {
+	string field = 1;
+}
+
+message UpdateRequest {
+	// ID of the character to be updated
+	string id = 1;
+	// character with updated fields
+	Character2 character = 2;
+}
+// Character describes a character in the game
+message Character2 {
+	// Name of the character
+	string name = 1;
+	// Description of the character
+	optional string description = 2;
+	// Amount of health the character has
+	uint32 health = 3;
+	// Amount of experience the character has
+	optional uint32 experience = 4;
+}
+
+message UpdateResponse {
+}
+
+message RemoveRequest {
+	// ID of character to remove
+	string id = 1;
+}
+
+message RemoveResponse {
+}
