@@ -1,0 +1,123 @@
+// Code generated with goa v3.12.4, DO NOT EDIT.
+//
+// item protocol buffer definition
+//
+// Command:
+// $ goa gen game-service/design
+
+syntax = "proto3";
+
+package item;
+
+option go_package = "/itempb";
+
+// The item service is the service for managing items
+service Item {
+	// List all items
+	rpc List (ListRequest) returns (StoredItemCollection);
+	// Show item by ID
+	rpc Show (ShowRequest) returns (ShowResponse);
+	// Add new item and return its ID
+	rpc Add (AddRequest) returns (AddResponse);
+	// Update an item with the given ID
+	rpc Update (UpdateRequest) returns (UpdateResponse);
+	// Remove an item
+	rpc Remove (RemoveRequest) returns (RemoveResponse);
+}
+
+message ListRequest {
+}
+
+message StoredItemCollection {
+	repeated StoredItem field = 1;
+}
+// A StoredItem describes an item stored with an ID
+message StoredItem {
+	// ID is the unique id of the item.
+	string id = 7;
+	// Name of item
+	string name = 2;
+	// Description of item
+	optional string description = 3;
+	// Amount of damage the item can do
+	uint32 damage = 4;
+	// Amount of healing the item can provide
+	uint32 healing = 5;
+	// Amount of protection the item can provide
+	uint32 protection = 6;
+}
+
+message ShowNotFoundError {
+	// not found
+	string message_ = 1;
+	// ID of missing item
+	string id = 2;
+}
+
+message ShowRequest {
+	// ID of item to show
+	string id = 1;
+}
+
+message ShowResponse {
+	// ID is the unique id of the item.
+	string id = 7;
+	// Name of item
+	string name = 2;
+	// Description of item
+	optional string description = 3;
+	// Amount of damage the item can do
+	uint32 damage = 4;
+	// Amount of healing the item can provide
+	uint32 healing = 5;
+	// Amount of protection the item can provide
+	uint32 protection = 6;
+}
+
+message AddRequest {
+	// Name of item
+	string name = 1;
+	// Description of item
+	optional string description = 2;
+	// Amount of damage the item can do
+	uint32 damage = 3;
+	// Amount of healing the item can provide
+	uint32 healing = 4;
+	// Amount of protection the item can provide
+	uint32 protection = 5;
+}
+
+message AddResponse {
+	string field = 1;
+}
+
+message UpdateRequest {
+	// ID of the item to be updated
+	string id = 1;
+	// Item with updated fields
+	Item2 item = 2;
+}
+// Item describes an item in a player's inventory
+message Item2 {
+	// Name of item
+	string name = 1;
+	// Description of item
+	optional string description = 2;
+	// Amount of damage the item can do
+	uint32 damage = 3;
+	// Amount of healing the item can provide
+	uint32 healing = 4;
+	// Amount of protection the item can provide
+	uint32 protection = 5;
+}
+
+message UpdateResponse {
+}
+
+message RemoveRequest {
+	// ID of item to remove
+	string id = 1;
+}
+
+message RemoveResponse {
+}
