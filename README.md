@@ -1,4 +1,4 @@
-### Game Service
+# Game Service
 
 This is a Goa based project which hosts multiple HTTP and GRPC APIs to represent
 an online multiplayer game.
