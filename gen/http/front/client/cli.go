@@ -6,3 +6,186 @@
 // $ goa gen game-service/design
 
 package client
+
+import (
+	"encoding/json"
+	"fmt"
+	front "game-service/gen/front"
+	"unicode/utf8"
+
+	goa "goa.design/goa/v3/pkg"
+)
+
+// BuildShowCharacterPayload builds the payload for the front show-character
+// endpoint from CLI flags.
+func BuildShowCharacterPayload(frontShowCharacterID string, frontShowCharacterView string) (*front.ShowCharacterPayload, error) {
+	var err error
+	var id string
+	{
+		id = frontShowCharacterID
+	}
+	var view *string
+	{
+		if frontShowCharacterView != "" {
+			view = &frontShowCharacterView
+			if !(*view == "default" || *view == "tiny") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("view", *view, []any{"default", "tiny"}))
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	v := &front.ShowCharacterPayload{}
+	v.ID = id
+	v.View = view
+
+	return v, nil
+}
+
+// BuildAddCharacterPayload builds the payload for the front add-character
+// endpoint from CLI flags.
+func BuildAddCharacterPayload(frontAddCharacterBody string) (*front.Character, error) {
+	var err error
+	var body AddCharacterRequestBody
+	{
+		err = json.Unmarshal([]byte(frontAddCharacterBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n      \"experience\": 82239,\n      \"health\": 654,\n      \"name\": \"Arvish the Wise\"\n   }'")
+		}
+		if utf8.RuneCountInString(body.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 100, false))
+		}
+		if body.Description != nil {
+			if utf8.RuneCountInString(*body.Description) > 2000 {
+				err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", *body.Description, utf8.RuneCountInString(*body.Description), 2000, false))
+			}
+		}
+		if body.Health < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.health", body.Health, 0, true))
+		}
+		if body.Health > 2000 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.health", body.Health, 2000, false))
+		}
+		if body.Experience != nil {
+			if *body.Experience < 0 {
+				err = goa.MergeErrors(err, goa.InvalidRangeError("body.experience", *body.Experience, 0, true))
+			}
+		}
+		if body.Experience != nil {
+			if *body.Experience > 100000 {
+				err = goa.MergeErrors(err, goa.InvalidRangeError("body.experience", *body.Experience, 100000, false))
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	v := &front.Character{
+		Name:        body.Name,
+		Description: body.Description,
+		Health:      body.Health,
+		Experience:  body.Experience,
+	}
+
+	return v, nil
+}
+
+// BuildUpdateCharacterPayload builds the payload for the front
+// update-character endpoint from CLI flags.
+func BuildUpdateCharacterPayload(frontUpdateCharacterBody string, frontUpdateCharacterID string) (*front.UpdateCharacterPayload, error) {
+	var err error
+	var body UpdateCharacterRequestBody
+	{
+		err = json.Unmarshal([]byte(frontUpdateCharacterBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"character\": {\n         \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n         \"experience\": 75930,\n         \"health\": 1104,\n         \"name\": \"Arvish the Wise\"\n      }\n   }'")
+		}
+		if body.Character == nil {
+			err = goa.MergeErrors(err, goa.MissingFieldError("character", "body"))
+		}
+		if body.Character != nil {
+			if err2 := ValidateCharacterRequestBody(body.Character); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var id string
+	{
+		id = frontUpdateCharacterID
+	}
+	v := &front.UpdateCharacterPayload{}
+	if body.Character != nil {
+		v.Character = marshalCharacterRequestBodyToFrontCharacter(body.Character)
+	}
+	v.ID = id
+
+	return v, nil
+}
+
+// BuildRemoveCharacterPayload builds the payload for the front
+// remove-character endpoint from CLI flags.
+func BuildRemoveCharacterPayload(frontRemoveCharacterID string) (*front.RemoveCharacterPayload, error) {
+	var id string
+	{
+		id = frontRemoveCharacterID
+	}
+	v := &front.RemoveCharacterPayload{}
+	v.ID = id
+
+	return v, nil
+}
+
+// BuildAddItemPayload builds the payload for the front add-item endpoint from
+// CLI flags.
+func BuildAddItemPayload(frontAddItemBody string) (*front.AddItemPayload, error) {
+	var err error
+	var body AddItemRequestBody
+	{
+		err = json.Unmarshal([]byte(frontAddItemBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Voluptatem praesentium qui.\",\n      \"item\": {\n         \"damage\": 9,\n         \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n         \"healing\": 65,\n         \"name\": \"Sword of Wisdom\",\n         \"protection\": 16\n      }\n   }'")
+		}
+		if body.Item == nil {
+			err = goa.MergeErrors(err, goa.MissingFieldError("item", "body"))
+		}
+		if body.Item != nil {
+			if err2 := ValidateItemRequestBody(body.Item); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	v := &front.AddItemPayload{
+		ID: body.ID,
+	}
+	if body.Item != nil {
+		v.Item = marshalItemRequestBodyToFrontItem(body.Item)
+	}
+
+	return v, nil
+}
+
+// BuildRemoveItemPayload builds the payload for the front remove-item endpoint
+// from CLI flags.
+func BuildRemoveItemPayload(frontRemoveItemBody string) (*front.RemoveItemPayload, error) {
+	var err error
+	var body RemoveItemRequestBody
+	{
+		err = json.Unmarshal([]byte(frontRemoveItemBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Aperiam quibusdam ut.\",\n      \"item_id\": \"Eveniet enim fugit hic rerum consectetur distinctio.\"\n   }'")
+		}
+	}
+	v := &front.RemoveItemPayload{
+		ID:     body.ID,
+		ItemID: body.ItemID,
+	}
+
+	return v, nil
+}

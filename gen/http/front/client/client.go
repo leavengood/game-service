@@ -17,9 +17,33 @@ import (
 
 // Client lists the front service endpoint HTTP clients.
 type Client struct {
-	// ListItems Doer is the HTTP client used to make requests to the list-items
+	// ListCharacters Doer is the HTTP client used to make requests to the
+	// list-characters endpoint.
+	ListCharactersDoer goahttp.Doer
+
+	// ShowCharacter Doer is the HTTP client used to make requests to the
+	// show-character endpoint.
+	ShowCharacterDoer goahttp.Doer
+
+	// AddCharacter Doer is the HTTP client used to make requests to the
+	// add-character endpoint.
+	AddCharacterDoer goahttp.Doer
+
+	// UpdateCharacter Doer is the HTTP client used to make requests to the
+	// update-character endpoint.
+	UpdateCharacterDoer goahttp.Doer
+
+	// RemoveCharacter Doer is the HTTP client used to make requests to the
+	// remove-character endpoint.
+	RemoveCharacterDoer goahttp.Doer
+
+	// AddItem Doer is the HTTP client used to make requests to the add-item
 	// endpoint.
-	ListItemsDoer goahttp.Doer
+	AddItemDoer goahttp.Doer
+
+	// RemoveItem Doer is the HTTP client used to make requests to the remove-item
+	// endpoint.
+	RemoveItemDoer goahttp.Doer
 
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
@@ -41,7 +65,13 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		ListItemsDoer:       doer,
+		ListCharactersDoer:  doer,
+		ShowCharacterDoer:   doer,
+		AddCharacterDoer:    doer,
+		UpdateCharacterDoer: doer,
+		RemoveCharacterDoer: doer,
+		AddItemDoer:         doer,
+		RemoveItemDoer:      doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,
@@ -50,20 +80,159 @@ func NewClient(
 	}
 }
 
-// ListItems returns an endpoint that makes HTTP requests to the front service
-// list-items server.
-func (c *Client) ListItems() goa.Endpoint {
+// ListCharacters returns an endpoint that makes HTTP requests to the front
+// service list-characters server.
+func (c *Client) ListCharacters() goa.Endpoint {
 	var (
-		decodeResponse = DecodeListItemsResponse(c.decoder, c.RestoreResponseBody)
+		decodeResponse = DecodeListCharactersResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v any) (any, error) {
-		req, err := c.BuildListItemsRequest(ctx, v)
+		req, err := c.BuildListCharactersRequest(ctx, v)
 		if err != nil {
 			return nil, err
 		}
-		resp, err := c.ListItemsDoer.Do(req)
+		resp, err := c.ListCharactersDoer.Do(req)
 		if err != nil {
-			return nil, goahttp.ErrRequestError("front", "list-items", err)
+			return nil, goahttp.ErrRequestError("front", "list-characters", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// ShowCharacter returns an endpoint that makes HTTP requests to the front
+// service show-character server.
+func (c *Client) ShowCharacter() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeShowCharacterRequest(c.encoder)
+		decodeResponse = DecodeShowCharacterResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildShowCharacterRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ShowCharacterDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("front", "show-character", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// AddCharacter returns an endpoint that makes HTTP requests to the front
+// service add-character server.
+func (c *Client) AddCharacter() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeAddCharacterRequest(c.encoder)
+		decodeResponse = DecodeAddCharacterResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildAddCharacterRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.AddCharacterDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("front", "add-character", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// UpdateCharacter returns an endpoint that makes HTTP requests to the front
+// service update-character server.
+func (c *Client) UpdateCharacter() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeUpdateCharacterRequest(c.encoder)
+		decodeResponse = DecodeUpdateCharacterResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildUpdateCharacterRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.UpdateCharacterDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("front", "update-character", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// RemoveCharacter returns an endpoint that makes HTTP requests to the front
+// service remove-character server.
+func (c *Client) RemoveCharacter() goa.Endpoint {
+	var (
+		decodeResponse = DecodeRemoveCharacterResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildRemoveCharacterRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.RemoveCharacterDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("front", "remove-character", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// AddItem returns an endpoint that makes HTTP requests to the front service
+// add-item server.
+func (c *Client) AddItem() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeAddItemRequest(c.encoder)
+		decodeResponse = DecodeAddItemResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildAddItemRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.AddItemDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("front", "add-item", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// RemoveItem returns an endpoint that makes HTTP requests to the front service
+// remove-item server.
+func (c *Client) RemoveItem() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeRemoveItemRequest(c.encoder)
+		decodeResponse = DecodeRemoveItemResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildRemoveItemRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.RemoveItemDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("front", "remove-item", err)
 		}
 		return decodeResponse(resp)
 	}

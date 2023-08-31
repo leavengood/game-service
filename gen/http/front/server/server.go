@@ -18,8 +18,14 @@ import (
 
 // Server lists the front service endpoint HTTP handlers.
 type Server struct {
-	Mounts    []*MountPoint
-	ListItems http.Handler
+	Mounts          []*MountPoint
+	ListCharacters  http.Handler
+	ShowCharacter   http.Handler
+	AddCharacter    http.Handler
+	UpdateCharacter http.Handler
+	RemoveCharacter http.Handler
+	AddItem         http.Handler
+	RemoveItem      http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -49,9 +55,21 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
-			{"ListItems", "GET", "/items"},
+			{"ListCharacters", "GET", "/characters"},
+			{"ShowCharacter", "GET", "/characters/{id}"},
+			{"AddCharacter", "POST", "/characters"},
+			{"UpdateCharacter", "PUT", "/characters/{id}"},
+			{"RemoveCharacter", "DELETE", "/characters/{id}"},
+			{"AddItem", "POST", "/"},
+			{"RemoveItem", "DELETE", "/"},
 		},
-		ListItems: NewListItemsHandler(e.ListItems, mux, decoder, encoder, errhandler, formatter),
+		ListCharacters:  NewListCharactersHandler(e.ListCharacters, mux, decoder, encoder, errhandler, formatter),
+		ShowCharacter:   NewShowCharacterHandler(e.ShowCharacter, mux, decoder, encoder, errhandler, formatter),
+		AddCharacter:    NewAddCharacterHandler(e.AddCharacter, mux, decoder, encoder, errhandler, formatter),
+		UpdateCharacter: NewUpdateCharacterHandler(e.UpdateCharacter, mux, decoder, encoder, errhandler, formatter),
+		RemoveCharacter: NewRemoveCharacterHandler(e.RemoveCharacter, mux, decoder, encoder, errhandler, formatter),
+		AddItem:         NewAddItemHandler(e.AddItem, mux, decoder, encoder, errhandler, formatter),
+		RemoveItem:      NewRemoveItemHandler(e.RemoveItem, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -60,7 +78,13 @@ func (s *Server) Service() string { return "front" }
 
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
-	s.ListItems = m(s.ListItems)
+	s.ListCharacters = m(s.ListCharacters)
+	s.ShowCharacter = m(s.ShowCharacter)
+	s.AddCharacter = m(s.AddCharacter)
+	s.UpdateCharacter = m(s.UpdateCharacter)
+	s.RemoveCharacter = m(s.RemoveCharacter)
+	s.AddItem = m(s.AddItem)
+	s.RemoveItem = m(s.RemoveItem)
 }
 
 // MethodNames returns the methods served.
@@ -68,7 +92,13 @@ func (s *Server) MethodNames() []string { return front.MethodNames[:] }
 
 // Mount configures the mux to serve the front endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
-	MountListItemsHandler(mux, h.ListItems)
+	MountListCharactersHandler(mux, h.ListCharacters)
+	MountShowCharacterHandler(mux, h.ShowCharacter)
+	MountAddCharacterHandler(mux, h.AddCharacter)
+	MountUpdateCharacterHandler(mux, h.UpdateCharacter)
+	MountRemoveCharacterHandler(mux, h.RemoveCharacter)
+	MountAddItemHandler(mux, h.AddItem)
+	MountRemoveItemHandler(mux, h.RemoveItem)
 }
 
 // Mount configures the mux to serve the front endpoints.
@@ -76,21 +106,21 @@ func (s *Server) Mount(mux goahttp.Muxer) {
 	Mount(mux, s)
 }
 
-// MountListItemsHandler configures the mux to serve the "front" service
-// "list-items" endpoint.
-func MountListItemsHandler(mux goahttp.Muxer, h http.Handler) {
+// MountListCharactersHandler configures the mux to serve the "front" service
+// "list-characters" endpoint.
+func MountListCharactersHandler(mux goahttp.Muxer, h http.Handler) {
 	f, ok := h.(http.HandlerFunc)
 	if !ok {
 		f = func(w http.ResponseWriter, r *http.Request) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("GET", "/items", f)
+	mux.Handle("GET", "/characters", f)
 }
 
-// NewListItemsHandler creates a HTTP handler which loads the HTTP request and
-// calls the "front" service "list-items" endpoint.
-func NewListItemsHandler(
+// NewListCharactersHandler creates a HTTP handler which loads the HTTP request
+// and calls the "front" service "list-characters" endpoint.
+func NewListCharactersHandler(
 	endpoint goa.Endpoint,
 	mux goahttp.Muxer,
 	decoder func(*http.Request) goahttp.Decoder,
@@ -99,15 +129,321 @@ func NewListItemsHandler(
 	formatter func(ctx context.Context, err error) goahttp.Statuser,
 ) http.Handler {
 	var (
-		encodeResponse = EncodeListItemsResponse(encoder)
+		encodeResponse = EncodeListCharactersResponse(encoder)
 		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
-		ctx = context.WithValue(ctx, goa.MethodKey, "list-items")
+		ctx = context.WithValue(ctx, goa.MethodKey, "list-characters")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "front")
 		var err error
 		res, err := endpoint(ctx, nil)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountShowCharacterHandler configures the mux to serve the "front" service
+// "show-character" endpoint.
+func MountShowCharacterHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/characters/{id}", f)
+}
+
+// NewShowCharacterHandler creates a HTTP handler which loads the HTTP request
+// and calls the "front" service "show-character" endpoint.
+func NewShowCharacterHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeShowCharacterRequest(mux, decoder)
+		encodeResponse = EncodeShowCharacterResponse(encoder)
+		encodeError    = EncodeShowCharacterError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "show-character")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "front")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountAddCharacterHandler configures the mux to serve the "front" service
+// "add-character" endpoint.
+func MountAddCharacterHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/characters", f)
+}
+
+// NewAddCharacterHandler creates a HTTP handler which loads the HTTP request
+// and calls the "front" service "add-character" endpoint.
+func NewAddCharacterHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeAddCharacterRequest(mux, decoder)
+		encodeResponse = EncodeAddCharacterResponse(encoder)
+		encodeError    = EncodeAddCharacterError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "add-character")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "front")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountUpdateCharacterHandler configures the mux to serve the "front" service
+// "update-character" endpoint.
+func MountUpdateCharacterHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("PUT", "/characters/{id}", f)
+}
+
+// NewUpdateCharacterHandler creates a HTTP handler which loads the HTTP
+// request and calls the "front" service "update-character" endpoint.
+func NewUpdateCharacterHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeUpdateCharacterRequest(mux, decoder)
+		encodeResponse = EncodeUpdateCharacterResponse(encoder)
+		encodeError    = EncodeUpdateCharacterError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "update-character")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "front")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountRemoveCharacterHandler configures the mux to serve the "front" service
+// "remove-character" endpoint.
+func MountRemoveCharacterHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("DELETE", "/characters/{id}", f)
+}
+
+// NewRemoveCharacterHandler creates a HTTP handler which loads the HTTP
+// request and calls the "front" service "remove-character" endpoint.
+func NewRemoveCharacterHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeRemoveCharacterRequest(mux, decoder)
+		encodeResponse = EncodeRemoveCharacterResponse(encoder)
+		encodeError    = EncodeRemoveCharacterError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "remove-character")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "front")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountAddItemHandler configures the mux to serve the "front" service
+// "add-item" endpoint.
+func MountAddItemHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/", f)
+}
+
+// NewAddItemHandler creates a HTTP handler which loads the HTTP request and
+// calls the "front" service "add-item" endpoint.
+func NewAddItemHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeAddItemRequest(mux, decoder)
+		encodeResponse = EncodeAddItemResponse(encoder)
+		encodeError    = EncodeAddItemError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "add-item")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "front")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountRemoveItemHandler configures the mux to serve the "front" service
+// "remove-item" endpoint.
+func MountRemoveItemHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("DELETE", "/", f)
+}
+
+// NewRemoveItemHandler creates a HTTP handler which loads the HTTP request and
+// calls the "front" service "remove-item" endpoint.
+func NewRemoveItemHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeRemoveItemRequest(mux, decoder)
+		encodeResponse = EncodeRemoveItemResponse(encoder)
+		encodeError    = EncodeRemoveItemError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "remove-item")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "front")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
 				errhandler(ctx, w, err)

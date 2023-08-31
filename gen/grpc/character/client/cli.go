@@ -25,7 +25,7 @@ func BuildShowPayload(characterShowMessage string, characterShowView string) (*c
 		if characterShowMessage != "" {
 			err = json.Unmarshal([]byte(characterShowMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Tempore qui dignissimos quia.\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Atque tenetur non dicta dolores.\"\n   }'")
 			}
 		}
 	}
@@ -58,7 +58,7 @@ func BuildAddPayload(characterAddMessage string) (*character.Character, error) {
 		if characterAddMessage != "" {
 			err = json.Unmarshal([]byte(characterAddMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n      \"experience\": 10767,\n      \"health\": 946,\n      \"name\": \"Arvish the Wise\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n      \"experience\": 85126,\n      \"health\": 667,\n      \"name\": \"Arvish the Wise\"\n   }'")
 			}
 		}
 	}
@@ -81,7 +81,7 @@ func BuildUpdatePayload(characterUpdateMessage string) (*character.UpdatePayload
 		if characterUpdateMessage != "" {
 			err = json.Unmarshal([]byte(characterUpdateMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"character\": {\n         \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n         \"experience\": 13813,\n         \"health\": 35,\n         \"name\": \"Arvish the Wise\"\n      },\n      \"id\": \"Fugit ipsa debitis dolor ipsam.\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"character\": {\n         \"description\": \"A grizzled wizard with a penchant for mayhem and mead\",\n         \"experience\": 13813,\n         \"health\": 35,\n         \"name\": \"Arvish the Wise\"\n      },\n      \"id\": \"Velit aut velit.\"\n   }'")
 			}
 		}
 	}
@@ -104,7 +104,7 @@ func BuildRemovePayload(characterRemoveMessage string) (*character.RemovePayload
 		if characterRemoveMessage != "" {
 			err = json.Unmarshal([]byte(characterRemoveMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Veritatis et.\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Eum et nihil enim.\"\n   }'")
 			}
 		}
 	}

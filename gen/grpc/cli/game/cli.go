@@ -11,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	characterc "game-service/gen/grpc/character/client"
-	frontc "game-service/gen/grpc/front/client"
 	inventoryc "game-service/gen/grpc/inventory/client"
 	itemc "game-service/gen/grpc/item/client"
 	"os"
@@ -26,7 +25,6 @@ import (
 func UsageCommands() string {
 	return `character (list|show|add|update|remove)
 inventory (show|add|remove)
-front list-items
 item (list|show|add|update|remove)
 `
 }
@@ -35,9 +33,8 @@ item (list|show|add|update|remove)
 func UsageExamples() string {
 	return os.Args[0] + ` character list` + "\n" +
 		os.Args[0] + ` inventory show --message '{
-      "id": "Eum aperiam ut voluptatem sunt omnis."
+      "id": "Qui enim modi magni doloremque fugiat impedit."
    }'` + "\n" +
-		os.Args[0] + ` front list-items` + "\n" +
 		os.Args[0] + ` item list` + "\n" +
 		""
 }
@@ -74,10 +71,6 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 		inventoryRemoveFlags       = flag.NewFlagSet("remove", flag.ExitOnError)
 		inventoryRemoveMessageFlag = inventoryRemoveFlags.String("message", "", "")
 
-		frontFlags = flag.NewFlagSet("front", flag.ContinueOnError)
-
-		frontListItemsFlags = flag.NewFlagSet("list-items", flag.ExitOnError)
-
 		itemFlags = flag.NewFlagSet("item", flag.ContinueOnError)
 
 		itemListFlags = flag.NewFlagSet("list", flag.ExitOnError)
@@ -107,9 +100,6 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 	inventoryAddFlags.Usage = inventoryAddUsage
 	inventoryRemoveFlags.Usage = inventoryRemoveUsage
 
-	frontFlags.Usage = frontUsage
-	frontListItemsFlags.Usage = frontListItemsUsage
-
 	itemFlags.Usage = itemUsage
 	itemListFlags.Usage = itemListUsage
 	itemShowFlags.Usage = itemShowUsage
@@ -136,8 +126,6 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 			svcf = characterFlags
 		case "inventory":
 			svcf = inventoryFlags
-		case "front":
-			svcf = frontFlags
 		case "item":
 			svcf = itemFlags
 		default:
@@ -184,13 +172,6 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 
 			case "remove":
 				epf = inventoryRemoveFlags
-
-			}
-
-		case "front":
-			switch epn {
-			case "list-items":
-				epf = frontListItemsFlags
 
 			}
 
@@ -265,13 +246,6 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 				endpoint = c.Remove()
 				data, err = inventoryc.BuildRemovePayload(*inventoryRemoveMessageFlag)
 			}
-		case "front":
-			c := frontc.NewClient(cc, opts...)
-			switch epn {
-			case "list-items":
-				endpoint = c.ListItems()
-				data = nil
-			}
 		case "item":
 			c := itemc.NewClient(cc, opts...)
 			switch epn {
@@ -337,8 +311,8 @@ Show character by ID
 
 Example:
     %[1]s character show --message '{
-      "id": "Tempore qui dignissimos quia."
-   }' --view "tiny"
+      "id": "Atque tenetur non dicta dolores."
+   }' --view "default"
 `, os.Args[0])
 }
 
@@ -351,8 +325,8 @@ Add new character and return its ID
 Example:
     %[1]s character add --message '{
       "description": "A grizzled wizard with a penchant for mayhem and mead",
-      "experience": 10767,
-      "health": 946,
+      "experience": 85126,
+      "health": 667,
       "name": "Arvish the Wise"
    }'
 `, os.Args[0])
@@ -372,7 +346,7 @@ Example:
          "health": 35,
          "name": "Arvish the Wise"
       },
-      "id": "Fugit ipsa debitis dolor ipsam."
+      "id": "Velit aut velit."
    }'
 `, os.Args[0])
 }
@@ -385,7 +359,7 @@ Remove a character
 
 Example:
     %[1]s character remove --message '{
-      "id": "Veritatis et."
+      "id": "Eum et nihil enim."
    }'
 `, os.Args[0])
 }
@@ -414,7 +388,7 @@ Show the inventory for a character as a list of item IDs
 
 Example:
     %[1]s inventory show --message '{
-      "id": "Eum aperiam ut voluptatem sunt omnis."
+      "id": "Qui enim modi magni doloremque fugiat impedit."
    }'
 `, os.Args[0])
 }
@@ -427,8 +401,8 @@ Add an item ID to a character's inventory
 
 Example:
     %[1]s inventory add --message '{
-      "id": "Suscipit fugit consequatur voluptatum.",
-      "item_id": "Consequatur quisquam impedit."
+      "id": "Ipsa vitae molestias itaque animi.",
+      "item_id": "Qui consequatur ut nisi expedita et."
    }'
 `, os.Args[0])
 }
@@ -441,32 +415,9 @@ Remove an item ID from a character's inventory
 
 Example:
     %[1]s inventory remove --message '{
-      "id": "Molestiae eos totam quo totam nemo.",
-      "item_id": "Voluptatem praesentium qui."
+      "id": "Fuga quis aut et et pariatur eos.",
+      "item_id": "Vitae quae dolores."
    }'
-`, os.Args[0])
-}
-
-// frontUsage displays the usage of the front command and its subcommands.
-func frontUsage() {
-	fmt.Fprintf(os.Stderr, `The front service is the main HTTP API for the game
-Usage:
-    %[1]s [globalflags] front COMMAND [flags]
-
-COMMAND:
-    list-items: List all items
-
-Additional help:
-    %[1]s front COMMAND --help
-`, os.Args[0])
-}
-func frontListItemsUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] front list-items
-
-List all items
-
-Example:
-    %[1]s front list-items
 `, os.Args[0])
 }
 
@@ -506,7 +457,7 @@ Show item by ID
 
 Example:
     %[1]s item show --message '{
-      "id": "Cumque ad."
+      "id": "Cumque sapiente sapiente quaerat nisi quo eaque."
    }' --view "tiny"
 `, os.Args[0])
 }
@@ -519,11 +470,11 @@ Add new item and return its ID
 
 Example:
     %[1]s item add --message '{
-      "damage": 107,
+      "damage": 85,
       "description": "A magnificent sword which grants the bearer +2 wisdom",
-      "healing": 182,
+      "healing": 42,
       "name": "Sword of Wisdom",
-      "protection": 18
+      "protection": 15
    }'
 `, os.Args[0])
 }
@@ -536,13 +487,13 @@ Update an item with the given ID
 
 Example:
     %[1]s item update --message '{
-      "id": "Deserunt qui.",
+      "id": "Quae sint sequi est repudiandae magni.",
       "item": {
          "damage": 54,
          "description": "A magnificent sword which grants the bearer +2 wisdom",
-         "healing": 164,
+         "healing": 154,
          "name": "Sword of Wisdom",
-         "protection": 11
+         "protection": 19
       }
    }'
 `, os.Args[0])
@@ -556,7 +507,7 @@ Remove an item
 
 Example:
     %[1]s item remove --message '{
-      "id": "Non dicta."
+      "id": "Sint quos odit at quia officiis esse."
    }'
 `, os.Args[0])
 }

@@ -27,7 +27,7 @@ import (
 func UsageCommands() string {
 	return `character (list|show|add|update|remove)
 inventory (show|add|remove)
-front list-items
+front (list-characters|show-character|add-character|update-character|remove-character|add-item|remove-item)
 item (list|show|add|update|remove)
 `
 }
@@ -35,8 +35,8 @@ item (list|show|add|update|remove)
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` character list` + "\n" +
-		os.Args[0] + ` inventory show --id "Officia modi harum nulla mollitia quaerat."` + "\n" +
-		os.Args[0] + ` front list-items` + "\n" +
+		os.Args[0] + ` inventory show --id "Fugit perspiciatis aut odio dolor."` + "\n" +
+		os.Args[0] + ` front list-characters` + "\n" +
 		os.Args[0] + ` item list` + "\n" +
 		""
 }
@@ -82,7 +82,27 @@ func ParseEndpoint(
 
 		frontFlags = flag.NewFlagSet("front", flag.ContinueOnError)
 
-		frontListItemsFlags = flag.NewFlagSet("list-items", flag.ExitOnError)
+		frontListCharactersFlags = flag.NewFlagSet("list-characters", flag.ExitOnError)
+
+		frontShowCharacterFlags    = flag.NewFlagSet("show-character", flag.ExitOnError)
+		frontShowCharacterIDFlag   = frontShowCharacterFlags.String("id", "REQUIRED", "ID of character to show")
+		frontShowCharacterViewFlag = frontShowCharacterFlags.String("view", "", "")
+
+		frontAddCharacterFlags    = flag.NewFlagSet("add-character", flag.ExitOnError)
+		frontAddCharacterBodyFlag = frontAddCharacterFlags.String("body", "REQUIRED", "")
+
+		frontUpdateCharacterFlags    = flag.NewFlagSet("update-character", flag.ExitOnError)
+		frontUpdateCharacterBodyFlag = frontUpdateCharacterFlags.String("body", "REQUIRED", "")
+		frontUpdateCharacterIDFlag   = frontUpdateCharacterFlags.String("id", "REQUIRED", "ID of the character to be updated")
+
+		frontRemoveCharacterFlags  = flag.NewFlagSet("remove-character", flag.ExitOnError)
+		frontRemoveCharacterIDFlag = frontRemoveCharacterFlags.String("id", "REQUIRED", "ID of character to remove")
+
+		frontAddItemFlags    = flag.NewFlagSet("add-item", flag.ExitOnError)
+		frontAddItemBodyFlag = frontAddItemFlags.String("body", "REQUIRED", "")
+
+		frontRemoveItemFlags    = flag.NewFlagSet("remove-item", flag.ExitOnError)
+		frontRemoveItemBodyFlag = frontRemoveItemFlags.String("body", "REQUIRED", "")
 
 		itemFlags = flag.NewFlagSet("item", flag.ContinueOnError)
 
@@ -115,7 +135,13 @@ func ParseEndpoint(
 	inventoryRemoveFlags.Usage = inventoryRemoveUsage
 
 	frontFlags.Usage = frontUsage
-	frontListItemsFlags.Usage = frontListItemsUsage
+	frontListCharactersFlags.Usage = frontListCharactersUsage
+	frontShowCharacterFlags.Usage = frontShowCharacterUsage
+	frontAddCharacterFlags.Usage = frontAddCharacterUsage
+	frontUpdateCharacterFlags.Usage = frontUpdateCharacterUsage
+	frontRemoveCharacterFlags.Usage = frontRemoveCharacterUsage
+	frontAddItemFlags.Usage = frontAddItemUsage
+	frontRemoveItemFlags.Usage = frontRemoveItemUsage
 
 	itemFlags.Usage = itemUsage
 	itemListFlags.Usage = itemListUsage
@@ -196,8 +222,26 @@ func ParseEndpoint(
 
 		case "front":
 			switch epn {
-			case "list-items":
-				epf = frontListItemsFlags
+			case "list-characters":
+				epf = frontListCharactersFlags
+
+			case "show-character":
+				epf = frontShowCharacterFlags
+
+			case "add-character":
+				epf = frontAddCharacterFlags
+
+			case "update-character":
+				epf = frontUpdateCharacterFlags
+
+			case "remove-character":
+				epf = frontRemoveCharacterFlags
+
+			case "add-item":
+				epf = frontAddItemFlags
+
+			case "remove-item":
+				epf = frontRemoveItemFlags
 
 			}
 
@@ -275,9 +319,27 @@ func ParseEndpoint(
 		case "front":
 			c := frontc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
-			case "list-items":
-				endpoint = c.ListItems()
+			case "list-characters":
+				endpoint = c.ListCharacters()
 				data = nil
+			case "show-character":
+				endpoint = c.ShowCharacter()
+				data, err = frontc.BuildShowCharacterPayload(*frontShowCharacterIDFlag, *frontShowCharacterViewFlag)
+			case "add-character":
+				endpoint = c.AddCharacter()
+				data, err = frontc.BuildAddCharacterPayload(*frontAddCharacterBodyFlag)
+			case "update-character":
+				endpoint = c.UpdateCharacter()
+				data, err = frontc.BuildUpdateCharacterPayload(*frontUpdateCharacterBodyFlag, *frontUpdateCharacterIDFlag)
+			case "remove-character":
+				endpoint = c.RemoveCharacter()
+				data, err = frontc.BuildRemoveCharacterPayload(*frontRemoveCharacterIDFlag)
+			case "add-item":
+				endpoint = c.AddItem()
+				data, err = frontc.BuildAddItemPayload(*frontAddItemBodyFlag)
+			case "remove-item":
+				endpoint = c.RemoveItem()
+				data, err = frontc.BuildRemoveItemPayload(*frontRemoveItemBodyFlag)
 			}
 		case "item":
 			c := itemc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -343,7 +405,7 @@ Show character by ID
     -view STRING: 
 
 Example:
-    %[1]s character show --id "Sequi temporibus." --view "tiny"
+    %[1]s character show --id "Qui aut id et quo magni." --view "default"
 `, os.Args[0])
 }
 
@@ -356,8 +418,8 @@ Add new character and return its ID
 Example:
     %[1]s character add --body '{
       "description": "A grizzled wizard with a penchant for mayhem and mead",
-      "experience": 36060,
-      "health": 1852,
+      "experience": 67048,
+      "health": 1820,
       "name": "Arvish the Wise"
    }'
 `, os.Args[0])
@@ -374,11 +436,11 @@ Example:
     %[1]s character update --body '{
       "character": {
          "description": "A grizzled wizard with a penchant for mayhem and mead",
-         "experience": 26032,
-         "health": 786,
+         "experience": 75930,
+         "health": 1104,
          "name": "Arvish the Wise"
       }
-   }' --id "Qui deleniti dolore."
+   }' --id "Harum nulla mollitia."
 `, os.Args[0])
 }
 
@@ -389,7 +451,7 @@ Remove a character
     -id STRING: ID of character to remove
 
 Example:
-    %[1]s character remove --id "Itaque expedita ex."
+    %[1]s character remove --id "Omnis non accusamus consequatur voluptatum officia iusto."
 `, os.Args[0])
 }
 
@@ -416,7 +478,7 @@ Show the inventory for a character as a list of item IDs
     -id STRING: ID of the character
 
 Example:
-    %[1]s inventory show --id "Officia modi harum nulla mollitia quaerat."
+    %[1]s inventory show --id "Fugit perspiciatis aut odio dolor."
 `, os.Args[0])
 }
 
@@ -428,8 +490,8 @@ Add an item ID to a character's inventory
 
 Example:
     %[1]s inventory add --body '{
-      "id": "Est doloribus sequi qui animi in quia.",
-      "item_id": "Voluptas et non."
+      "id": "Eum ratione accusamus quae atque accusantium.",
+      "item_id": "Aut est fugiat."
    }'
 `, os.Args[0])
 }
@@ -442,8 +504,8 @@ Remove an item ID from a character's inventory
 
 Example:
     %[1]s inventory remove --body '{
-      "id": "Optio mollitia.",
-      "item_id": "Harum autem ipsam ratione atque voluptatibus."
+      "id": "Sit molestias ducimus ab ipsa nisi.",
+      "item_id": "Laboriosam cumque aut."
    }'
 `, os.Args[0])
 }
@@ -455,19 +517,117 @@ Usage:
     %[1]s [globalflags] front COMMAND [flags]
 
 COMMAND:
-    list-items: List all items
+    list-characters: List all characters
+    show-character: Show character by ID
+    add-character: Add new character and return its ID
+    update-character: Update a character with the given ID
+    remove-character: Remove a character
+    add-item: Add an item to a character's inventory and return its ID
+    remove-item: Remove an item ID from a character's inventory
 
 Additional help:
     %[1]s front COMMAND --help
 `, os.Args[0])
 }
-func frontListItemsUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] front list-items
+func frontListCharactersUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] front list-characters
 
-List all items
+List all characters
 
 Example:
-    %[1]s front list-items
+    %[1]s front list-characters
+`, os.Args[0])
+}
+
+func frontShowCharacterUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] front show-character -id STRING -view STRING
+
+Show character by ID
+    -id STRING: ID of character to show
+    -view STRING: 
+
+Example:
+    %[1]s front show-character --id "Iure ipsa accusantium." --view "tiny"
+`, os.Args[0])
+}
+
+func frontAddCharacterUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] front add-character -body JSON
+
+Add new character and return its ID
+    -body JSON: 
+
+Example:
+    %[1]s front add-character --body '{
+      "description": "A grizzled wizard with a penchant for mayhem and mead",
+      "experience": 82239,
+      "health": 654,
+      "name": "Arvish the Wise"
+   }'
+`, os.Args[0])
+}
+
+func frontUpdateCharacterUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] front update-character -body JSON -id STRING
+
+Update a character with the given ID
+    -body JSON: 
+    -id STRING: ID of the character to be updated
+
+Example:
+    %[1]s front update-character --body '{
+      "character": {
+         "description": "A grizzled wizard with a penchant for mayhem and mead",
+         "experience": 75930,
+         "health": 1104,
+         "name": "Arvish the Wise"
+      }
+   }' --id "Voluptas optio est."
+`, os.Args[0])
+}
+
+func frontRemoveCharacterUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] front remove-character -id STRING
+
+Remove a character
+    -id STRING: ID of character to remove
+
+Example:
+    %[1]s front remove-character --id "Suscipit fugit consequatur voluptatum."
+`, os.Args[0])
+}
+
+func frontAddItemUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] front add-item -body JSON
+
+Add an item to a character's inventory and return its ID
+    -body JSON: 
+
+Example:
+    %[1]s front add-item --body '{
+      "id": "Voluptatem praesentium qui.",
+      "item": {
+         "damage": 9,
+         "description": "A magnificent sword which grants the bearer +2 wisdom",
+         "healing": 65,
+         "name": "Sword of Wisdom",
+         "protection": 16
+      }
+   }'
+`, os.Args[0])
+}
+
+func frontRemoveItemUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] front remove-item -body JSON
+
+Remove an item ID from a character's inventory
+    -body JSON: 
+
+Example:
+    %[1]s front remove-item --body '{
+      "id": "Aperiam quibusdam ut.",
+      "item_id": "Eveniet enim fugit hic rerum consectetur distinctio."
+   }'
 `, os.Args[0])
 }
 
@@ -506,7 +666,7 @@ Show item by ID
     -view STRING: 
 
 Example:
-    %[1]s item show --id "Corrupti eos blanditiis quibusdam ullam." --view "tiny"
+    %[1]s item show --id "Sapiente et laboriosam voluptas maiores dolorem porro." --view "default"
 `, os.Args[0])
 }
 
@@ -518,11 +678,11 @@ Add new item and return its ID
 
 Example:
     %[1]s item add --body '{
-      "damage": 149,
+      "damage": 102,
       "description": "A magnificent sword which grants the bearer +2 wisdom",
-      "healing": 52,
+      "healing": 185,
       "name": "Sword of Wisdom",
-      "protection": 17
+      "protection": 5
    }'
 `, os.Args[0])
 }
@@ -537,13 +697,13 @@ Update an item with the given ID
 Example:
     %[1]s item update --body '{
       "item": {
-         "damage": 99,
+         "damage": 9,
          "description": "A magnificent sword which grants the bearer +2 wisdom",
-         "healing": 57,
+         "healing": 65,
          "name": "Sword of Wisdom",
-         "protection": 17
+         "protection": 16
       }
-   }' --id "Quia et iste accusamus veniam."
+   }' --id "Libero deleniti quo culpa."
 `, os.Args[0])
 }
 
@@ -554,6 +714,6 @@ Remove an item
     -id STRING: ID of item to remove
 
 Example:
-    %[1]s item remove --id "Aspernatur qui culpa facilis."
+    %[1]s item remove --id "Quia vero pariatur consectetur ut."
 `, os.Args[0])
 }

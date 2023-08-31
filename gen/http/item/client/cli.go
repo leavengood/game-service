@@ -50,7 +50,7 @@ func BuildAddPayload(itemAddBody string) (*item.Item, error) {
 	{
 		err = json.Unmarshal([]byte(itemAddBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"damage\": 149,\n      \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n      \"healing\": 52,\n      \"name\": \"Sword of Wisdom\",\n      \"protection\": 17\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"damage\": 102,\n      \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n      \"healing\": 185,\n      \"name\": \"Sword of Wisdom\",\n      \"protection\": 5\n   }'")
 		}
 		if utf8.RuneCountInString(body.Name) > 100 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 100, false))
@@ -101,7 +101,7 @@ func BuildUpdatePayload(itemUpdateBody string, itemUpdateID string) (*item.Updat
 	{
 		err = json.Unmarshal([]byte(itemUpdateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"item\": {\n         \"damage\": 99,\n         \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n         \"healing\": 57,\n         \"name\": \"Sword of Wisdom\",\n         \"protection\": 17\n      }\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"item\": {\n         \"damage\": 9,\n         \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n         \"healing\": 65,\n         \"name\": \"Sword of Wisdom\",\n         \"protection\": 16\n      }\n   }'")
 		}
 		if body.Item == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("item", "body"))

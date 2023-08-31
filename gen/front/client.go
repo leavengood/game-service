@@ -15,22 +15,102 @@ import (
 
 // Client is the "front" service client.
 type Client struct {
-	ListItemsEndpoint goa.Endpoint
+	ListCharactersEndpoint  goa.Endpoint
+	ShowCharacterEndpoint   goa.Endpoint
+	AddCharacterEndpoint    goa.Endpoint
+	UpdateCharacterEndpoint goa.Endpoint
+	RemoveCharacterEndpoint goa.Endpoint
+	AddItemEndpoint         goa.Endpoint
+	RemoveItemEndpoint      goa.Endpoint
 }
 
 // NewClient initializes a "front" service client given the endpoints.
-func NewClient(listItems goa.Endpoint) *Client {
+func NewClient(listCharacters, showCharacter, addCharacter, updateCharacter, removeCharacter, addItem, removeItem goa.Endpoint) *Client {
 	return &Client{
-		ListItemsEndpoint: listItems,
+		ListCharactersEndpoint:  listCharacters,
+		ShowCharacterEndpoint:   showCharacter,
+		AddCharacterEndpoint:    addCharacter,
+		UpdateCharacterEndpoint: updateCharacter,
+		RemoveCharacterEndpoint: removeCharacter,
+		AddItemEndpoint:         addItem,
+		RemoveItemEndpoint:      removeItem,
 	}
 }
 
-// ListItems calls the "list-items" endpoint of the "front" service.
-func (c *Client) ListItems(ctx context.Context) (res StoredItemCollection, err error) {
+// ListCharacters calls the "list-characters" endpoint of the "front" service.
+func (c *Client) ListCharacters(ctx context.Context) (res StoredCharacterCollection, err error) {
 	var ires any
-	ires, err = c.ListItemsEndpoint(ctx, nil)
+	ires, err = c.ListCharactersEndpoint(ctx, nil)
 	if err != nil {
 		return
 	}
-	return ires.(StoredItemCollection), nil
+	return ires.(StoredCharacterCollection), nil
+}
+
+// ShowCharacter calls the "show-character" endpoint of the "front" service.
+// ShowCharacter may return the following errors:
+//   - "not_found" (type *NotFound): character not found
+//   - error: internal error
+func (c *Client) ShowCharacter(ctx context.Context, p *ShowCharacterPayload) (res *StoredCharacter, err error) {
+	var ires any
+	ires, err = c.ShowCharacterEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*StoredCharacter), nil
+}
+
+// AddCharacter calls the "add-character" endpoint of the "front" service.
+// AddCharacter may return the following errors:
+//   - "name_taken" (type *NameTaken): name is taken
+//   - error: internal error
+func (c *Client) AddCharacter(ctx context.Context, p *Character) (res string, err error) {
+	var ires any
+	ires, err = c.AddCharacterEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(string), nil
+}
+
+// UpdateCharacter calls the "update-character" endpoint of the "front" service.
+// UpdateCharacter may return the following errors:
+//   - "not_found" (type *NotFound): character not found
+//   - "name_taken" (type *NameTaken): name is taken
+//   - error: internal error
+func (c *Client) UpdateCharacter(ctx context.Context, p *UpdateCharacterPayload) (err error) {
+	_, err = c.UpdateCharacterEndpoint(ctx, p)
+	return
+}
+
+// RemoveCharacter calls the "remove-character" endpoint of the "front" service.
+// RemoveCharacter may return the following errors:
+//   - "not_found" (type *NotFound): character not found
+//   - error: internal error
+func (c *Client) RemoveCharacter(ctx context.Context, p *RemoveCharacterPayload) (err error) {
+	_, err = c.RemoveCharacterEndpoint(ctx, p)
+	return
+}
+
+// AddItem calls the "add-item" endpoint of the "front" service.
+// AddItem may return the following errors:
+//   - "not_found" (type *NotFound): character not found
+//   - "name_taken" (type *NameTaken): name is taken
+//   - error: internal error
+func (c *Client) AddItem(ctx context.Context, p *AddItemPayload) (res string, err error) {
+	var ires any
+	ires, err = c.AddItemEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(string), nil
+}
+
+// RemoveItem calls the "remove-item" endpoint of the "front" service.
+// RemoveItem may return the following errors:
+//   - "not_found" (type *NotFound): Character or item not found
+//   - error: internal error
+func (c *Client) RemoveItem(ctx context.Context, p *RemoveItemPayload) (err error) {
+	_, err = c.RemoveItemEndpoint(ctx, p)
+	return
 }

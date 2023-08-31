@@ -15,30 +15,107 @@ import (
 
 // Endpoints wraps the "front" service endpoints.
 type Endpoints struct {
-	ListItems goa.Endpoint
+	ListCharacters  goa.Endpoint
+	ShowCharacter   goa.Endpoint
+	AddCharacter    goa.Endpoint
+	UpdateCharacter goa.Endpoint
+	RemoveCharacter goa.Endpoint
+	AddItem         goa.Endpoint
+	RemoveItem      goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "front" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		ListItems: NewListItemsEndpoint(s),
+		ListCharacters:  NewListCharactersEndpoint(s),
+		ShowCharacter:   NewShowCharacterEndpoint(s),
+		AddCharacter:    NewAddCharacterEndpoint(s),
+		UpdateCharacter: NewUpdateCharacterEndpoint(s),
+		RemoveCharacter: NewRemoveCharacterEndpoint(s),
+		AddItem:         NewAddItemEndpoint(s),
+		RemoveItem:      NewRemoveItemEndpoint(s),
 	}
 }
 
 // Use applies the given middleware to all the "front" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
-	e.ListItems = m(e.ListItems)
+	e.ListCharacters = m(e.ListCharacters)
+	e.ShowCharacter = m(e.ShowCharacter)
+	e.AddCharacter = m(e.AddCharacter)
+	e.UpdateCharacter = m(e.UpdateCharacter)
+	e.RemoveCharacter = m(e.RemoveCharacter)
+	e.AddItem = m(e.AddItem)
+	e.RemoveItem = m(e.RemoveItem)
 }
 
-// NewListItemsEndpoint returns an endpoint function that calls the method
-// "list-items" of service "front".
-func NewListItemsEndpoint(s Service) goa.Endpoint {
+// NewListCharactersEndpoint returns an endpoint function that calls the method
+// "list-characters" of service "front".
+func NewListCharactersEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		res, view, err := s.ListItems(ctx)
+		res, err := s.ListCharacters(ctx)
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedStoredItemCollection(res, view)
+		vres := NewViewedStoredCharacterCollection(res, "tiny")
 		return vres, nil
+	}
+}
+
+// NewShowCharacterEndpoint returns an endpoint function that calls the method
+// "show-character" of service "front".
+func NewShowCharacterEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*ShowCharacterPayload)
+		res, view, err := s.ShowCharacter(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		vres := NewViewedStoredCharacter(res, view)
+		return vres, nil
+	}
+}
+
+// NewAddCharacterEndpoint returns an endpoint function that calls the method
+// "add-character" of service "front".
+func NewAddCharacterEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*Character)
+		return s.AddCharacter(ctx, p)
+	}
+}
+
+// NewUpdateCharacterEndpoint returns an endpoint function that calls the
+// method "update-character" of service "front".
+func NewUpdateCharacterEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*UpdateCharacterPayload)
+		return nil, s.UpdateCharacter(ctx, p)
+	}
+}
+
+// NewRemoveCharacterEndpoint returns an endpoint function that calls the
+// method "remove-character" of service "front".
+func NewRemoveCharacterEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*RemoveCharacterPayload)
+		return nil, s.RemoveCharacter(ctx, p)
+	}
+}
+
+// NewAddItemEndpoint returns an endpoint function that calls the method
+// "add-item" of service "front".
+func NewAddItemEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*AddItemPayload)
+		return s.AddItem(ctx, p)
+	}
+}
+
+// NewRemoveItemEndpoint returns an endpoint function that calls the method
+// "remove-item" of service "front".
+func NewRemoveItemEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*RemoveItemPayload)
+		return nil, s.RemoveItem(ctx, p)
 	}
 }

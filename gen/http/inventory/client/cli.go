@@ -34,7 +34,7 @@ func BuildAddPayload(inventoryAddBody string) (*inventory.AddPayload, error) {
 	{
 		err = json.Unmarshal([]byte(inventoryAddBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Est doloribus sequi qui animi in quia.\",\n      \"item_id\": \"Voluptas et non.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Eum ratione accusamus quae atque accusantium.\",\n      \"item_id\": \"Aut est fugiat.\"\n   }'")
 		}
 	}
 	v := &inventory.AddPayload{
@@ -53,7 +53,7 @@ func BuildRemovePayload(inventoryRemoveBody string) (*inventory.RemovePayload, e
 	{
 		err = json.Unmarshal([]byte(inventoryRemoveBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Optio mollitia.\",\n      \"item_id\": \"Harum autem ipsam ratione atque voluptatibus.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Sit molestias ducimus ab ipsa nisi.\",\n      \"item_id\": \"Laboriosam cumque aut.\"\n   }'")
 		}
 	}
 	v := &inventory.RemovePayload{

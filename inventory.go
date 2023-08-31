@@ -13,6 +13,8 @@ type inventorysrvc struct {
 	logger *log.Logger
 	// Map of character ID to a set of item IDs
 	inventory map[string]set
+	// TODO: Maybe have a reverse mapping so the same item doesn't get put into
+	// different character inventories
 }
 
 // NewInventory returns the inventory service implementation.

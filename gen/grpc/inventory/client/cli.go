@@ -23,7 +23,7 @@ func BuildShowPayload(inventoryShowMessage string) (*inventory.ShowPayload, erro
 		if inventoryShowMessage != "" {
 			err = json.Unmarshal([]byte(inventoryShowMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Eum aperiam ut voluptatem sunt omnis.\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Qui enim modi magni doloremque fugiat impedit.\"\n   }'")
 			}
 		}
 	}
@@ -43,7 +43,7 @@ func BuildAddPayload(inventoryAddMessage string) (*inventory.AddPayload, error) 
 		if inventoryAddMessage != "" {
 			err = json.Unmarshal([]byte(inventoryAddMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Suscipit fugit consequatur voluptatum.\",\n      \"item_id\": \"Consequatur quisquam impedit.\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Ipsa vitae molestias itaque animi.\",\n      \"item_id\": \"Qui consequatur ut nisi expedita et.\"\n   }'")
 			}
 		}
 	}
@@ -64,7 +64,7 @@ func BuildRemovePayload(inventoryRemoveMessage string) (*inventory.RemovePayload
 		if inventoryRemoveMessage != "" {
 			err = json.Unmarshal([]byte(inventoryRemoveMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Molestiae eos totam quo totam nemo.\",\n      \"item_id\": \"Voluptatem praesentium qui.\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Fuga quis aut et et pariatur eos.\",\n      \"item_id\": \"Vitae quae dolores.\"\n   }'")
 			}
 		}
 	}

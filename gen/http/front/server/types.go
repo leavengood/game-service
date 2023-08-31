@@ -8,57 +8,540 @@
 package server
 
 import (
+	front "game-service/gen/front"
 	frontviews "game-service/gen/front/views"
+	"unicode/utf8"
+
+	goa "goa.design/goa/v3/pkg"
 )
 
-// StoredItemResponseCollection is the type of the "front" service "list-items"
-// endpoint HTTP response body.
-type StoredItemResponseCollection []*StoredItemResponse
+// AddCharacterRequestBody is the type of the "front" service "add-character"
+// endpoint HTTP request body.
+type AddCharacterRequestBody struct {
+	// Name of the character
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Description of the character
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Amount of health the character has
+	Health *uint32 `form:"health,omitempty" json:"health,omitempty" xml:"health,omitempty"`
+	// Amount of experience the character has
+	Experience *uint32 `form:"experience,omitempty" json:"experience,omitempty" xml:"experience,omitempty"`
+}
 
-// StoredItemResponseTinyCollection is the type of the "front" service
-// "list-items" endpoint HTTP response body.
-type StoredItemResponseTinyCollection []*StoredItemResponseTiny
+// UpdateCharacterRequestBody is the type of the "front" service
+// "update-character" endpoint HTTP request body.
+type UpdateCharacterRequestBody struct {
+	// character with updated fields
+	Character *CharacterRequestBody `form:"character,omitempty" json:"character,omitempty" xml:"character,omitempty"`
+}
 
-// StoredItemResponse is used to define fields on response body types.
-type StoredItemResponse struct {
-	// ID is the unique id of the item.
+// AddItemRequestBody is the type of the "front" service "add-item" endpoint
+// HTTP request body.
+type AddItemRequestBody struct {
+	// ID of the character to be updated
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Item to add
+	Item *ItemRequestBody `form:"item,omitempty" json:"item,omitempty" xml:"item,omitempty"`
+}
+
+// RemoveItemRequestBody is the type of the "front" service "remove-item"
+// endpoint HTTP request body.
+type RemoveItemRequestBody struct {
+	// ID of the character
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// ID of the item
+	ItemID *string `form:"item_id,omitempty" json:"item_id,omitempty" xml:"item_id,omitempty"`
+}
+
+// StoredCharacterResponseTinyCollection is the type of the "front" service
+// "list-characters" endpoint HTTP response body.
+type StoredCharacterResponseTinyCollection []*StoredCharacterResponseTiny
+
+// ShowCharacterResponseBody is the type of the "front" service
+// "show-character" endpoint HTTP response body.
+type ShowCharacterResponseBody struct {
+	// ID is the unique id of the character.
 	ID string `form:"id" json:"id" xml:"id"`
-	// Name of item
+	// Name of the character
 	Name string `form:"name" json:"name" xml:"name"`
+	// Description of the character
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Amount of health the character has
+	Health uint32 `form:"health" json:"health" xml:"health"`
+	// Amount of experience the character has
+	Experience uint32 `form:"experience" json:"experience" xml:"experience"`
+}
+
+// ShowCharacterResponseBodyTiny is the type of the "front" service
+// "show-character" endpoint HTTP response body.
+type ShowCharacterResponseBodyTiny struct {
+	// ID is the unique id of the character.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Name of the character
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
+// ShowCharacterNotFoundResponseBody is the type of the "front" service
+// "show-character" endpoint HTTP response body for the "not_found" error.
+type ShowCharacterNotFoundResponseBody struct {
+	// not found
+	Message string `form:"message" json:"message" xml:"message"`
+	// ID of missing item
+	ID string `form:"id" json:"id" xml:"id"`
+}
+
+// AddCharacterNameTakenResponseBody is the type of the "front" service
+// "add-character" endpoint HTTP response body for the "name_taken" error.
+type AddCharacterNameTakenResponseBody struct {
+	// name taken
+	Message string `form:"message" json:"message" xml:"message"`
+	// name that is not unique
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
+// UpdateCharacterNameTakenResponseBody is the type of the "front" service
+// "update-character" endpoint HTTP response body for the "name_taken" error.
+type UpdateCharacterNameTakenResponseBody struct {
+	// name taken
+	Message string `form:"message" json:"message" xml:"message"`
+	// name that is not unique
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
+// UpdateCharacterNotFoundResponseBody is the type of the "front" service
+// "update-character" endpoint HTTP response body for the "not_found" error.
+type UpdateCharacterNotFoundResponseBody struct {
+	// not found
+	Message string `form:"message" json:"message" xml:"message"`
+	// ID of missing item
+	ID string `form:"id" json:"id" xml:"id"`
+}
+
+// RemoveCharacterNotFoundResponseBody is the type of the "front" service
+// "remove-character" endpoint HTTP response body for the "not_found" error.
+type RemoveCharacterNotFoundResponseBody struct {
+	// not found
+	Message string `form:"message" json:"message" xml:"message"`
+	// ID of missing item
+	ID string `form:"id" json:"id" xml:"id"`
+}
+
+// AddItemNameTakenResponseBody is the type of the "front" service "add-item"
+// endpoint HTTP response body for the "name_taken" error.
+type AddItemNameTakenResponseBody struct {
+	// name taken
+	Message string `form:"message" json:"message" xml:"message"`
+	// name that is not unique
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
+// AddItemNotFoundResponseBody is the type of the "front" service "add-item"
+// endpoint HTTP response body for the "not_found" error.
+type AddItemNotFoundResponseBody struct {
+	// not found
+	Message string `form:"message" json:"message" xml:"message"`
+	// ID of missing item
+	ID string `form:"id" json:"id" xml:"id"`
+}
+
+// RemoveItemNotFoundResponseBody is the type of the "front" service
+// "remove-item" endpoint HTTP response body for the "not_found" error.
+type RemoveItemNotFoundResponseBody struct {
+	// not found
+	Message string `form:"message" json:"message" xml:"message"`
+	// ID of missing item
+	ID string `form:"id" json:"id" xml:"id"`
+}
+
+// StoredCharacterResponseTiny is used to define fields on response body types.
+type StoredCharacterResponseTiny struct {
+	// ID is the unique id of the character.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Name of the character
+	Name string `form:"name" json:"name" xml:"name"`
+}
+
+// CharacterRequestBody is used to define fields on request body types.
+type CharacterRequestBody struct {
+	// Name of the character
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Description of the character
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Amount of health the character has
+	Health *uint32 `form:"health,omitempty" json:"health,omitempty" xml:"health,omitempty"`
+	// Amount of experience the character has
+	Experience *uint32 `form:"experience,omitempty" json:"experience,omitempty" xml:"experience,omitempty"`
+}
+
+// ItemRequestBody is used to define fields on request body types.
+type ItemRequestBody struct {
+	// Name of item
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// Description of item
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
 	// Amount of damage the item can do
-	Damage uint32 `form:"damage" json:"damage" xml:"damage"`
+	Damage *uint32 `form:"damage,omitempty" json:"damage,omitempty" xml:"damage,omitempty"`
 	// Amount of healing the item can provide
-	Healing uint32 `form:"healing" json:"healing" xml:"healing"`
+	Healing *uint32 `form:"healing,omitempty" json:"healing,omitempty" xml:"healing,omitempty"`
 	// Amount of protection the item can provide
-	Protection uint32 `form:"protection" json:"protection" xml:"protection"`
+	Protection *uint32 `form:"protection,omitempty" json:"protection,omitempty" xml:"protection,omitempty"`
 }
 
-// StoredItemResponseTiny is used to define fields on response body types.
-type StoredItemResponseTiny struct {
-	// ID is the unique id of the item.
-	ID string `form:"id" json:"id" xml:"id"`
-	// Name of item
-	Name string `form:"name" json:"name" xml:"name"`
-}
-
-// NewStoredItemResponseCollection builds the HTTP response body from the
-// result of the "list-items" endpoint of the "front" service.
-func NewStoredItemResponseCollection(res frontviews.StoredItemCollectionView) StoredItemResponseCollection {
-	body := make([]*StoredItemResponse, len(res))
+// NewStoredCharacterResponseTinyCollection builds the HTTP response body from
+// the result of the "list-characters" endpoint of the "front" service.
+func NewStoredCharacterResponseTinyCollection(res frontviews.StoredCharacterCollectionView) StoredCharacterResponseTinyCollection {
+	body := make([]*StoredCharacterResponseTiny, len(res))
 	for i, val := range res {
-		body[i] = marshalFrontviewsStoredItemViewToStoredItemResponse(val)
+		body[i] = marshalFrontviewsStoredCharacterViewToStoredCharacterResponseTiny(val)
 	}
 	return body
 }
 
-// NewStoredItemResponseTinyCollection builds the HTTP response body from the
-// result of the "list-items" endpoint of the "front" service.
-func NewStoredItemResponseTinyCollection(res frontviews.StoredItemCollectionView) StoredItemResponseTinyCollection {
-	body := make([]*StoredItemResponseTiny, len(res))
-	for i, val := range res {
-		body[i] = marshalFrontviewsStoredItemViewToStoredItemResponseTiny(val)
+// NewShowCharacterResponseBody builds the HTTP response body from the result
+// of the "show-character" endpoint of the "front" service.
+func NewShowCharacterResponseBody(res *frontviews.StoredCharacterView) *ShowCharacterResponseBody {
+	body := &ShowCharacterResponseBody{
+		ID:          *res.ID,
+		Name:        *res.Name,
+		Description: res.Description,
+		Health:      *res.Health,
+		Experience:  *res.Experience,
 	}
 	return body
+}
+
+// NewShowCharacterResponseBodyTiny builds the HTTP response body from the
+// result of the "show-character" endpoint of the "front" service.
+func NewShowCharacterResponseBodyTiny(res *frontviews.StoredCharacterView) *ShowCharacterResponseBodyTiny {
+	body := &ShowCharacterResponseBodyTiny{
+		ID:   *res.ID,
+		Name: *res.Name,
+	}
+	return body
+}
+
+// NewShowCharacterNotFoundResponseBody builds the HTTP response body from the
+// result of the "show-character" endpoint of the "front" service.
+func NewShowCharacterNotFoundResponseBody(res *front.NotFound) *ShowCharacterNotFoundResponseBody {
+	body := &ShowCharacterNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
+// NewAddCharacterNameTakenResponseBody builds the HTTP response body from the
+// result of the "add-character" endpoint of the "front" service.
+func NewAddCharacterNameTakenResponseBody(res *front.NameTaken) *AddCharacterNameTakenResponseBody {
+	body := &AddCharacterNameTakenResponseBody{
+		Message: res.Message,
+		Name:    res.Name,
+	}
+	return body
+}
+
+// NewUpdateCharacterNameTakenResponseBody builds the HTTP response body from
+// the result of the "update-character" endpoint of the "front" service.
+func NewUpdateCharacterNameTakenResponseBody(res *front.NameTaken) *UpdateCharacterNameTakenResponseBody {
+	body := &UpdateCharacterNameTakenResponseBody{
+		Message: res.Message,
+		Name:    res.Name,
+	}
+	return body
+}
+
+// NewUpdateCharacterNotFoundResponseBody builds the HTTP response body from
+// the result of the "update-character" endpoint of the "front" service.
+func NewUpdateCharacterNotFoundResponseBody(res *front.NotFound) *UpdateCharacterNotFoundResponseBody {
+	body := &UpdateCharacterNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
+// NewRemoveCharacterNotFoundResponseBody builds the HTTP response body from
+// the result of the "remove-character" endpoint of the "front" service.
+func NewRemoveCharacterNotFoundResponseBody(res *front.NotFound) *RemoveCharacterNotFoundResponseBody {
+	body := &RemoveCharacterNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
+// NewAddItemNameTakenResponseBody builds the HTTP response body from the
+// result of the "add-item" endpoint of the "front" service.
+func NewAddItemNameTakenResponseBody(res *front.NameTaken) *AddItemNameTakenResponseBody {
+	body := &AddItemNameTakenResponseBody{
+		Message: res.Message,
+		Name:    res.Name,
+	}
+	return body
+}
+
+// NewAddItemNotFoundResponseBody builds the HTTP response body from the result
+// of the "add-item" endpoint of the "front" service.
+func NewAddItemNotFoundResponseBody(res *front.NotFound) *AddItemNotFoundResponseBody {
+	body := &AddItemNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
+// NewRemoveItemNotFoundResponseBody builds the HTTP response body from the
+// result of the "remove-item" endpoint of the "front" service.
+func NewRemoveItemNotFoundResponseBody(res *front.NotFound) *RemoveItemNotFoundResponseBody {
+	body := &RemoveItemNotFoundResponseBody{
+		Message: res.Message,
+		ID:      res.ID,
+	}
+	return body
+}
+
+// NewShowCharacterPayload builds a front service show-character endpoint
+// payload.
+func NewShowCharacterPayload(id string, view *string) *front.ShowCharacterPayload {
+	v := &front.ShowCharacterPayload{}
+	v.ID = id
+	v.View = view
+
+	return v
+}
+
+// NewAddCharacterCharacter builds a front service add-character endpoint
+// payload.
+func NewAddCharacterCharacter(body *AddCharacterRequestBody) *front.Character {
+	v := &front.Character{
+		Name:        *body.Name,
+		Description: body.Description,
+		Health:      *body.Health,
+		Experience:  body.Experience,
+	}
+
+	return v
+}
+
+// NewUpdateCharacterPayload builds a front service update-character endpoint
+// payload.
+func NewUpdateCharacterPayload(body *UpdateCharacterRequestBody, id string) *front.UpdateCharacterPayload {
+	v := &front.UpdateCharacterPayload{}
+	v.Character = unmarshalCharacterRequestBodyToFrontCharacter(body.Character)
+	v.ID = id
+
+	return v
+}
+
+// NewRemoveCharacterPayload builds a front service remove-character endpoint
+// payload.
+func NewRemoveCharacterPayload(id string) *front.RemoveCharacterPayload {
+	v := &front.RemoveCharacterPayload{}
+	v.ID = id
+
+	return v
+}
+
+// NewAddItemPayload builds a front service add-item endpoint payload.
+func NewAddItemPayload(body *AddItemRequestBody) *front.AddItemPayload {
+	v := &front.AddItemPayload{
+		ID: *body.ID,
+	}
+	v.Item = unmarshalItemRequestBodyToFrontItem(body.Item)
+
+	return v
+}
+
+// NewRemoveItemPayload builds a front service remove-item endpoint payload.
+func NewRemoveItemPayload(body *RemoveItemRequestBody) *front.RemoveItemPayload {
+	v := &front.RemoveItemPayload{
+		ID:     *body.ID,
+		ItemID: *body.ItemID,
+	}
+
+	return v
+}
+
+// ValidateAddCharacterRequestBody runs the validations defined on
+// Add-CharacterRequestBody
+func ValidateAddCharacterRequestBody(body *AddCharacterRequestBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Health == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("health", "body"))
+	}
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
+		}
+	}
+	if body.Description != nil {
+		if utf8.RuneCountInString(*body.Description) > 2000 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", *body.Description, utf8.RuneCountInString(*body.Description), 2000, false))
+		}
+	}
+	if body.Health != nil {
+		if *body.Health < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.health", *body.Health, 0, true))
+		}
+	}
+	if body.Health != nil {
+		if *body.Health > 2000 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.health", *body.Health, 2000, false))
+		}
+	}
+	if body.Experience != nil {
+		if *body.Experience < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.experience", *body.Experience, 0, true))
+		}
+	}
+	if body.Experience != nil {
+		if *body.Experience > 100000 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.experience", *body.Experience, 100000, false))
+		}
+	}
+	return
+}
+
+// ValidateUpdateCharacterRequestBody runs the validations defined on
+// Update-CharacterRequestBody
+func ValidateUpdateCharacterRequestBody(body *UpdateCharacterRequestBody) (err error) {
+	if body.Character == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("character", "body"))
+	}
+	if body.Character != nil {
+		if err2 := ValidateCharacterRequestBody(body.Character); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateAddItemRequestBody runs the validations defined on
+// Add-ItemRequestBody
+func ValidateAddItemRequestBody(body *AddItemRequestBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Item == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("item", "body"))
+	}
+	if body.Item != nil {
+		if err2 := ValidateItemRequestBody(body.Item); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateRemoveItemRequestBody runs the validations defined on
+// Remove-ItemRequestBody
+func ValidateRemoveItemRequestBody(body *RemoveItemRequestBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.ItemID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("item_id", "body"))
+	}
+	return
+}
+
+// ValidateCharacterRequestBody runs the validations defined on
+// CharacterRequestBody
+func ValidateCharacterRequestBody(body *CharacterRequestBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Health == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("health", "body"))
+	}
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
+		}
+	}
+	if body.Description != nil {
+		if utf8.RuneCountInString(*body.Description) > 2000 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", *body.Description, utf8.RuneCountInString(*body.Description), 2000, false))
+		}
+	}
+	if body.Health != nil {
+		if *body.Health < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.health", *body.Health, 0, true))
+		}
+	}
+	if body.Health != nil {
+		if *body.Health > 2000 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.health", *body.Health, 2000, false))
+		}
+	}
+	if body.Experience != nil {
+		if *body.Experience < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.experience", *body.Experience, 0, true))
+		}
+	}
+	if body.Experience != nil {
+		if *body.Experience > 100000 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.experience", *body.Experience, 100000, false))
+		}
+	}
+	return
+}
+
+// ValidateItemRequestBody runs the validations defined on ItemRequestBody
+func ValidateItemRequestBody(body *ItemRequestBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Damage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("damage", "body"))
+	}
+	if body.Healing == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("healing", "body"))
+	}
+	if body.Protection == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("protection", "body"))
+	}
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
+		}
+	}
+	if body.Description != nil {
+		if utf8.RuneCountInString(*body.Description) > 2000 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", *body.Description, utf8.RuneCountInString(*body.Description), 2000, false))
+		}
+	}
+	if body.Damage != nil {
+		if *body.Damage < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.damage", *body.Damage, 0, true))
+		}
+	}
+	if body.Damage != nil {
+		if *body.Damage > 200 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.damage", *body.Damage, 200, false))
+		}
+	}
+	if body.Healing != nil {
+		if *body.Healing < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.healing", *body.Healing, 0, true))
+		}
+	}
+	if body.Healing != nil {
+		if *body.Healing > 200 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.healing", *body.Healing, 200, false))
+		}
+	}
+	if body.Protection != nil {
+		if *body.Protection < 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.protection", *body.Protection, 0, true))
+		}
+	}
+	if body.Protection != nil {
+		if *body.Protection > 20 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.protection", *body.Protection, 20, false))
+		}
+	}
+	return
 }

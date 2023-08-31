@@ -25,7 +25,7 @@ func BuildShowPayload(itemShowMessage string, itemShowView string) (*item.ShowPa
 		if itemShowMessage != "" {
 			err = json.Unmarshal([]byte(itemShowMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Cumque ad.\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Cumque sapiente sapiente quaerat nisi quo eaque.\"\n   }'")
 			}
 		}
 	}
@@ -57,7 +57,7 @@ func BuildAddPayload(itemAddMessage string) (*item.Item, error) {
 		if itemAddMessage != "" {
 			err = json.Unmarshal([]byte(itemAddMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"damage\": 107,\n      \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n      \"healing\": 182,\n      \"name\": \"Sword of Wisdom\",\n      \"protection\": 18\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"damage\": 85,\n      \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n      \"healing\": 42,\n      \"name\": \"Sword of Wisdom\",\n      \"protection\": 15\n   }'")
 			}
 		}
 	}
@@ -81,7 +81,7 @@ func BuildUpdatePayload(itemUpdateMessage string) (*item.UpdatePayload, error) {
 		if itemUpdateMessage != "" {
 			err = json.Unmarshal([]byte(itemUpdateMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Deserunt qui.\",\n      \"item\": {\n         \"damage\": 54,\n         \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n         \"healing\": 164,\n         \"name\": \"Sword of Wisdom\",\n         \"protection\": 11\n      }\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Quae sint sequi est repudiandae magni.\",\n      \"item\": {\n         \"damage\": 54,\n         \"description\": \"A magnificent sword which grants the bearer +2 wisdom\",\n         \"healing\": 154,\n         \"name\": \"Sword of Wisdom\",\n         \"protection\": 19\n      }\n   }'")
 			}
 		}
 	}
@@ -104,7 +104,7 @@ func BuildRemovePayload(itemRemoveMessage string) (*item.RemovePayload, error) {
 		if itemRemoveMessage != "" {
 			err = json.Unmarshal([]byte(itemRemoveMessage), &message)
 			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Non dicta.\"\n   }'")
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"id\": \"Sint quos odit at quia officiis esse.\"\n   }'")
 			}
 		}
 	}

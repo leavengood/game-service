@@ -14,11 +14,23 @@ import (
 
 // The front service is the main HTTP API for the game
 type Service interface {
-	// List all items
+	// List all characters
+	ListCharacters(context.Context) (res StoredCharacterCollection, err error)
+	// Show character by ID
 	// The "view" return value must have one of the following views
 	//	- "default"
 	//	- "tiny"
-	ListItems(context.Context) (res StoredItemCollection, view string, err error)
+	ShowCharacter(context.Context, *ShowCharacterPayload) (res *StoredCharacter, view string, err error)
+	// Add new character and return its ID
+	AddCharacter(context.Context, *Character) (res string, err error)
+	// Update a character with the given ID
+	UpdateCharacter(context.Context, *UpdateCharacterPayload) (err error)
+	// Remove a character
+	RemoveCharacter(context.Context, *RemoveCharacterPayload) (err error)
+	// Add an item to a character's inventory and return its ID
+	AddItem(context.Context, *AddItemPayload) (res string, err error)
+	// Remove an item ID from a character's inventory
+	RemoveItem(context.Context, *RemoveItemPayload) (err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -29,12 +41,30 @@ const ServiceName = "front"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [1]string{"list-items"}
+var MethodNames = [7]string{"list-characters", "show-character", "add-character", "update-character", "remove-character", "add-item", "remove-item"}
 
-// A StoredItem describes an item stored with an ID
-type StoredItem struct {
-	// ID is the unique id of the item.
+// AddItemPayload is the payload type of the front service add-item method.
+type AddItemPayload struct {
+	// ID of the character to be updated
 	ID string
+	// Item to add
+	Item *Item
+}
+
+// Character is the payload type of the front service add-character method.
+type Character struct {
+	// Name of the character
+	Name string
+	// Description of the character
+	Description *string
+	// Amount of health the character has
+	Health uint32
+	// Amount of experience the character has
+	Experience *uint32
+}
+
+// Item describes an item in a player's inventory
+type Item struct {
 	// Name of item
 	Name string
 	// Description of item
@@ -47,82 +77,213 @@ type StoredItem struct {
 	Protection uint32
 }
 
-// StoredItemCollection is the result type of the front service list-items
-// method.
-type StoredItemCollection []*StoredItem
+// NameTaken is the type returned when a name for an API object already exists
+type NameTaken struct {
+	// name taken
+	Message string
+	// name that is not unique
+	Name string
+}
 
-// NewStoredItemCollection initializes result type StoredItemCollection from
-// viewed result type StoredItemCollection.
-func NewStoredItemCollection(vres frontviews.StoredItemCollection) StoredItemCollection {
-	var res StoredItemCollection
+// NotFound is the type returned when attempting to show, update or delete an
+// API object that does not exist
+type NotFound struct {
+	// not found
+	Message string
+	// ID of missing item
+	ID string
+}
+
+// RemoveCharacterPayload is the payload type of the front service
+// remove-character method.
+type RemoveCharacterPayload struct {
+	// ID of character to remove
+	ID string
+}
+
+// RemoveItemPayload is the payload type of the front service remove-item
+// method.
+type RemoveItemPayload struct {
+	// ID of the character
+	ID string
+	// ID of the item
+	ItemID string
+}
+
+// ShowCharacterPayload is the payload type of the front service show-character
+// method.
+type ShowCharacterPayload struct {
+	// ID of character to show
+	ID string
+	// View to render
+	View *string
+}
+
+// StoredCharacter is the result type of the front service show-character
+// method.
+type StoredCharacter struct {
+	// ID is the unique id of the character.
+	ID string
+	// Name of the character
+	Name string
+	// Description of the character
+	Description *string
+	// Amount of health the character has
+	Health uint32
+	// Amount of experience the character has
+	Experience uint32
+}
+
+// StoredCharacterCollection is the result type of the front service
+// list-characters method.
+type StoredCharacterCollection []*StoredCharacter
+
+// UpdateCharacterPayload is the payload type of the front service
+// update-character method.
+type UpdateCharacterPayload struct {
+	// ID of the character to be updated
+	ID string
+	// character with updated fields
+	Character *Character
+}
+
+// Error returns an error description.
+func (e *NameTaken) Error() string {
+	return "NameTaken is the type returned when a name for an API object already exists"
+}
+
+// ErrorName returns "NameTaken".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e *NameTaken) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "NameTaken".
+func (e *NameTaken) GoaErrorName() string {
+	return "name_taken"
+}
+
+// Error returns an error description.
+func (e *NotFound) Error() string {
+	return "NotFound is the type returned when attempting to show, update or delete an API object that does not exist"
+}
+
+// ErrorName returns "NotFound".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e *NotFound) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "NotFound".
+func (e *NotFound) GoaErrorName() string {
+	return "not_found"
+}
+
+// NewStoredCharacterCollection initializes result type
+// StoredCharacterCollection from viewed result type StoredCharacterCollection.
+func NewStoredCharacterCollection(vres frontviews.StoredCharacterCollection) StoredCharacterCollection {
+	var res StoredCharacterCollection
 	switch vres.View {
 	case "default", "":
-		res = newStoredItemCollection(vres.Projected)
+		res = newStoredCharacterCollection(vres.Projected)
 	case "tiny":
-		res = newStoredItemCollectionTiny(vres.Projected)
+		res = newStoredCharacterCollectionTiny(vres.Projected)
 	}
 	return res
 }
 
-// NewViewedStoredItemCollection initializes viewed result type
-// StoredItemCollection from result type StoredItemCollection using the given
-// view.
-func NewViewedStoredItemCollection(res StoredItemCollection, view string) frontviews.StoredItemCollection {
-	var vres frontviews.StoredItemCollection
+// NewViewedStoredCharacterCollection initializes viewed result type
+// StoredCharacterCollection from result type StoredCharacterCollection using
+// the given view.
+func NewViewedStoredCharacterCollection(res StoredCharacterCollection, view string) frontviews.StoredCharacterCollection {
+	var vres frontviews.StoredCharacterCollection
 	switch view {
 	case "default", "":
-		p := newStoredItemCollectionView(res)
-		vres = frontviews.StoredItemCollection{Projected: p, View: "default"}
+		p := newStoredCharacterCollectionView(res)
+		vres = frontviews.StoredCharacterCollection{Projected: p, View: "default"}
 	case "tiny":
-		p := newStoredItemCollectionViewTiny(res)
-		vres = frontviews.StoredItemCollection{Projected: p, View: "tiny"}
+		p := newStoredCharacterCollectionViewTiny(res)
+		vres = frontviews.StoredCharacterCollection{Projected: p, View: "tiny"}
 	}
 	return vres
 }
 
-// newStoredItemCollection converts projected type StoredItemCollection to
-// service type StoredItemCollection.
-func newStoredItemCollection(vres frontviews.StoredItemCollectionView) StoredItemCollection {
-	res := make(StoredItemCollection, len(vres))
-	for i, n := range vres {
-		res[i] = newStoredItem(n)
+// NewStoredCharacter initializes result type StoredCharacter from viewed
+// result type StoredCharacter.
+func NewStoredCharacter(vres *frontviews.StoredCharacter) *StoredCharacter {
+	var res *StoredCharacter
+	switch vres.View {
+	case "default", "":
+		res = newStoredCharacter(vres.Projected)
+	case "tiny":
+		res = newStoredCharacterTiny(vres.Projected)
 	}
 	return res
 }
 
-// newStoredItemCollectionTiny converts projected type StoredItemCollection to
-// service type StoredItemCollection.
-func newStoredItemCollectionTiny(vres frontviews.StoredItemCollectionView) StoredItemCollection {
-	res := make(StoredItemCollection, len(vres))
+// NewViewedStoredCharacter initializes viewed result type StoredCharacter from
+// result type StoredCharacter using the given view.
+func NewViewedStoredCharacter(res *StoredCharacter, view string) *frontviews.StoredCharacter {
+	var vres *frontviews.StoredCharacter
+	switch view {
+	case "default", "":
+		p := newStoredCharacterView(res)
+		vres = &frontviews.StoredCharacter{Projected: p, View: "default"}
+	case "tiny":
+		p := newStoredCharacterViewTiny(res)
+		vres = &frontviews.StoredCharacter{Projected: p, View: "tiny"}
+	}
+	return vres
+}
+
+// newStoredCharacterCollection converts projected type
+// StoredCharacterCollection to service type StoredCharacterCollection.
+func newStoredCharacterCollection(vres frontviews.StoredCharacterCollectionView) StoredCharacterCollection {
+	res := make(StoredCharacterCollection, len(vres))
 	for i, n := range vres {
-		res[i] = newStoredItemTiny(n)
+		res[i] = newStoredCharacter(n)
 	}
 	return res
 }
 
-// newStoredItemCollectionView projects result type StoredItemCollection to
-// projected type StoredItemCollectionView using the "default" view.
-func newStoredItemCollectionView(res StoredItemCollection) frontviews.StoredItemCollectionView {
-	vres := make(frontviews.StoredItemCollectionView, len(res))
+// newStoredCharacterCollectionTiny converts projected type
+// StoredCharacterCollection to service type StoredCharacterCollection.
+func newStoredCharacterCollectionTiny(vres frontviews.StoredCharacterCollectionView) StoredCharacterCollection {
+	res := make(StoredCharacterCollection, len(vres))
+	for i, n := range vres {
+		res[i] = newStoredCharacterTiny(n)
+	}
+	return res
+}
+
+// newStoredCharacterCollectionView projects result type
+// StoredCharacterCollection to projected type StoredCharacterCollectionView
+// using the "default" view.
+func newStoredCharacterCollectionView(res StoredCharacterCollection) frontviews.StoredCharacterCollectionView {
+	vres := make(frontviews.StoredCharacterCollectionView, len(res))
 	for i, n := range res {
-		vres[i] = newStoredItemView(n)
+		vres[i] = newStoredCharacterView(n)
 	}
 	return vres
 }
 
-// newStoredItemCollectionViewTiny projects result type StoredItemCollection to
-// projected type StoredItemCollectionView using the "tiny" view.
-func newStoredItemCollectionViewTiny(res StoredItemCollection) frontviews.StoredItemCollectionView {
-	vres := make(frontviews.StoredItemCollectionView, len(res))
+// newStoredCharacterCollectionViewTiny projects result type
+// StoredCharacterCollection to projected type StoredCharacterCollectionView
+// using the "tiny" view.
+func newStoredCharacterCollectionViewTiny(res StoredCharacterCollection) frontviews.StoredCharacterCollectionView {
+	vres := make(frontviews.StoredCharacterCollectionView, len(res))
 	for i, n := range res {
-		vres[i] = newStoredItemViewTiny(n)
+		vres[i] = newStoredCharacterViewTiny(n)
 	}
 	return vres
 }
 
-// newStoredItem converts projected type StoredItem to service type StoredItem.
-func newStoredItem(vres *frontviews.StoredItemView) *StoredItem {
-	res := &StoredItem{
+// newStoredCharacter converts projected type StoredCharacter to service type
+// StoredCharacter.
+func newStoredCharacter(vres *frontviews.StoredCharacterView) *StoredCharacter {
+	res := &StoredCharacter{
 		Description: vres.Description,
 	}
 	if vres.ID != nil {
@@ -131,22 +292,19 @@ func newStoredItem(vres *frontviews.StoredItemView) *StoredItem {
 	if vres.Name != nil {
 		res.Name = *vres.Name
 	}
-	if vres.Damage != nil {
-		res.Damage = *vres.Damage
+	if vres.Health != nil {
+		res.Health = *vres.Health
 	}
-	if vres.Healing != nil {
-		res.Healing = *vres.Healing
-	}
-	if vres.Protection != nil {
-		res.Protection = *vres.Protection
+	if vres.Experience != nil {
+		res.Experience = *vres.Experience
 	}
 	return res
 }
 
-// newStoredItemTiny converts projected type StoredItem to service type
-// StoredItem.
-func newStoredItemTiny(vres *frontviews.StoredItemView) *StoredItem {
-	res := &StoredItem{}
+// newStoredCharacterTiny converts projected type StoredCharacter to service
+// type StoredCharacter.
+func newStoredCharacterTiny(vres *frontviews.StoredCharacterView) *StoredCharacter {
+	res := &StoredCharacter{}
 	if vres.ID != nil {
 		res.ID = *vres.ID
 	}
@@ -156,24 +314,23 @@ func newStoredItemTiny(vres *frontviews.StoredItemView) *StoredItem {
 	return res
 }
 
-// newStoredItemView projects result type StoredItem to projected type
-// StoredItemView using the "default" view.
-func newStoredItemView(res *StoredItem) *frontviews.StoredItemView {
-	vres := &frontviews.StoredItemView{
+// newStoredCharacterView projects result type StoredCharacter to projected
+// type StoredCharacterView using the "default" view.
+func newStoredCharacterView(res *StoredCharacter) *frontviews.StoredCharacterView {
+	vres := &frontviews.StoredCharacterView{
 		ID:          &res.ID,
 		Name:        &res.Name,
 		Description: res.Description,
-		Damage:      &res.Damage,
-		Healing:     &res.Healing,
-		Protection:  &res.Protection,
+		Health:      &res.Health,
+		Experience:  &res.Experience,
 	}
 	return vres
 }
 
-// newStoredItemViewTiny projects result type StoredItem to projected type
-// StoredItemView using the "tiny" view.
-func newStoredItemViewTiny(res *StoredItem) *frontviews.StoredItemView {
-	vres := &frontviews.StoredItemView{
+// newStoredCharacterViewTiny projects result type StoredCharacter to projected
+// type StoredCharacterView using the "tiny" view.
+func newStoredCharacterViewTiny(res *StoredCharacter) *frontviews.StoredCharacterView {
+	vres := &frontviews.StoredCharacterView{
 		ID:   &res.ID,
 		Name: &res.Name,
 	}

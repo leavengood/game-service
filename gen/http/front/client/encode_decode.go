@@ -19,13 +19,13 @@ import (
 	goahttp "goa.design/goa/v3/http"
 )
 
-// BuildListItemsRequest instantiates a HTTP request object with method and
-// path set to call the "front" service "list-items" endpoint
-func (c *Client) BuildListItemsRequest(ctx context.Context, v any) (*http.Request, error) {
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ListItemsFrontPath()}
+// BuildListCharactersRequest instantiates a HTTP request object with method
+// and path set to call the "front" service "list-characters" endpoint
+func (c *Client) BuildListCharactersRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ListCharactersFrontPath()}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, goahttp.ErrInvalidURL("front", "list-items", u.String(), err)
+		return nil, goahttp.ErrInvalidURL("front", "list-characters", u.String(), err)
 	}
 	if ctx != nil {
 		req = req.WithContext(ctx)
@@ -34,10 +34,10 @@ func (c *Client) BuildListItemsRequest(ctx context.Context, v any) (*http.Reques
 	return req, nil
 }
 
-// DecodeListItemsResponse returns a decoder for responses returned by the
-// front list-items endpoint. restoreBody controls whether the response body
-// should be restored after having been read.
-func DecodeListItemsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+// DecodeListCharactersResponse returns a decoder for responses returned by the
+// front list-characters endpoint. restoreBody controls whether the response
+// body should be restored after having been read.
+func DecodeListCharactersResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
 	return func(resp *http.Response) (any, error) {
 		if restoreBody {
 			b, err := io.ReadAll(resp.Body)
@@ -54,33 +54,613 @@ func DecodeListItemsResponse(decoder func(*http.Response) goahttp.Decoder, resto
 		switch resp.StatusCode {
 		case http.StatusOK:
 			var (
-				body ListItemsResponseBody
+				body ListCharactersResponseBody
 				err  error
 			)
 			err = decoder(resp).Decode(&body)
 			if err != nil {
-				return nil, goahttp.ErrDecodingError("front", "list-items", err)
+				return nil, goahttp.ErrDecodingError("front", "list-characters", err)
 			}
-			p := NewListItemsStoredItemCollectionOK(body)
-			view := resp.Header.Get("goa-view")
-			vres := frontviews.StoredItemCollection{Projected: p, View: view}
-			if err = frontviews.ValidateStoredItemCollection(vres); err != nil {
-				return nil, goahttp.ErrValidationError("front", "list-items", err)
+			p := NewListCharactersStoredCharacterCollectionOK(body)
+			view := "tiny"
+			vres := frontviews.StoredCharacterCollection{Projected: p, View: view}
+			if err = frontviews.ValidateStoredCharacterCollection(vres); err != nil {
+				return nil, goahttp.ErrValidationError("front", "list-characters", err)
 			}
-			res := front.NewStoredItemCollection(vres)
+			res := front.NewStoredCharacterCollection(vres)
 			return res, nil
 		default:
 			body, _ := io.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("front", "list-items", resp.StatusCode, string(body))
+			return nil, goahttp.ErrInvalidResponse("front", "list-characters", resp.StatusCode, string(body))
 		}
 	}
 }
 
-// unmarshalStoredItemResponseToFrontviewsStoredItemView builds a value of type
-// *frontviews.StoredItemView from a value of type *StoredItemResponse.
-func unmarshalStoredItemResponseToFrontviewsStoredItemView(v *StoredItemResponse) *frontviews.StoredItemView {
-	res := &frontviews.StoredItemView{
+// BuildShowCharacterRequest instantiates a HTTP request object with method and
+// path set to call the "front" service "show-character" endpoint
+func (c *Client) BuildShowCharacterRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*front.ShowCharacterPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("front", "show-character", "*front.ShowCharacterPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ShowCharacterFrontPath(id)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("front", "show-character", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeShowCharacterRequest returns an encoder for requests sent to the front
+// show-character server.
+func EncodeShowCharacterRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*front.ShowCharacterPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("front", "show-character", "*front.ShowCharacterPayload", v)
+		}
+		values := req.URL.Query()
+		if p.View != nil {
+			values.Add("view", *p.View)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeShowCharacterResponse returns a decoder for responses returned by the
+// front show-character endpoint. restoreBody controls whether the response
+// body should be restored after having been read.
+// DecodeShowCharacterResponse may return the following errors:
+//   - "not_found" (type *front.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeShowCharacterResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body ShowCharacterResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "show-character", err)
+			}
+			p := NewShowCharacterStoredCharacterOK(&body)
+			view := resp.Header.Get("goa-view")
+			vres := &frontviews.StoredCharacter{Projected: p, View: view}
+			if err = frontviews.ValidateStoredCharacter(vres); err != nil {
+				return nil, goahttp.ErrValidationError("front", "show-character", err)
+			}
+			res := front.NewStoredCharacter(vres)
+			return res, nil
+		case http.StatusNotFound:
+			var (
+				body ShowCharacterNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "show-character", err)
+			}
+			err = ValidateShowCharacterNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("front", "show-character", err)
+			}
+			return nil, NewShowCharacterNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("front", "show-character", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildAddCharacterRequest instantiates a HTTP request object with method and
+// path set to call the "front" service "add-character" endpoint
+func (c *Client) BuildAddCharacterRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AddCharacterFrontPath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("front", "add-character", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeAddCharacterRequest returns an encoder for requests sent to the front
+// add-character server.
+func EncodeAddCharacterRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*front.Character)
+		if !ok {
+			return goahttp.ErrInvalidType("front", "add-character", "*front.Character", v)
+		}
+		body := NewAddCharacterRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("front", "add-character", err)
+		}
+		return nil
+	}
+}
+
+// DecodeAddCharacterResponse returns a decoder for responses returned by the
+// front add-character endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+// DecodeAddCharacterResponse may return the following errors:
+//   - "name_taken" (type *front.NameTaken): http.StatusConflict
+//   - error: internal error
+func DecodeAddCharacterResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusCreated:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "add-character", err)
+			}
+			return body, nil
+		case http.StatusConflict:
+			var (
+				body AddCharacterNameTakenResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "add-character", err)
+			}
+			err = ValidateAddCharacterNameTakenResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("front", "add-character", err)
+			}
+			return nil, NewAddCharacterNameTaken(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("front", "add-character", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildUpdateCharacterRequest instantiates a HTTP request object with method
+// and path set to call the "front" service "update-character" endpoint
+func (c *Client) BuildUpdateCharacterRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*front.UpdateCharacterPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("front", "update-character", "*front.UpdateCharacterPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UpdateCharacterFrontPath(id)}
+	req, err := http.NewRequest("PUT", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("front", "update-character", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeUpdateCharacterRequest returns an encoder for requests sent to the
+// front update-character server.
+func EncodeUpdateCharacterRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*front.UpdateCharacterPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("front", "update-character", "*front.UpdateCharacterPayload", v)
+		}
+		body := NewUpdateCharacterRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("front", "update-character", err)
+		}
+		return nil
+	}
+}
+
+// DecodeUpdateCharacterResponse returns a decoder for responses returned by
+// the front update-character endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+// DecodeUpdateCharacterResponse may return the following errors:
+//   - "name_taken" (type *front.NameTaken): http.StatusConflict
+//   - "not_found" (type *front.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeUpdateCharacterResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusNoContent:
+			return nil, nil
+		case http.StatusConflict:
+			var (
+				body UpdateCharacterNameTakenResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "update-character", err)
+			}
+			err = ValidateUpdateCharacterNameTakenResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("front", "update-character", err)
+			}
+			return nil, NewUpdateCharacterNameTaken(&body)
+		case http.StatusNotFound:
+			var (
+				body UpdateCharacterNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "update-character", err)
+			}
+			err = ValidateUpdateCharacterNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("front", "update-character", err)
+			}
+			return nil, NewUpdateCharacterNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("front", "update-character", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildRemoveCharacterRequest instantiates a HTTP request object with method
+// and path set to call the "front" service "remove-character" endpoint
+func (c *Client) BuildRemoveCharacterRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*front.RemoveCharacterPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("front", "remove-character", "*front.RemoveCharacterPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveCharacterFrontPath(id)}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("front", "remove-character", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeRemoveCharacterResponse returns a decoder for responses returned by
+// the front remove-character endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+// DecodeRemoveCharacterResponse may return the following errors:
+//   - "not_found" (type *front.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeRemoveCharacterResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusNoContent:
+			return nil, nil
+		case http.StatusNotFound:
+			var (
+				body RemoveCharacterNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "remove-character", err)
+			}
+			err = ValidateRemoveCharacterNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("front", "remove-character", err)
+			}
+			return nil, NewRemoveCharacterNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("front", "remove-character", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildAddItemRequest instantiates a HTTP request object with method and path
+// set to call the "front" service "add-item" endpoint
+func (c *Client) BuildAddItemRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AddItemFrontPath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("front", "add-item", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeAddItemRequest returns an encoder for requests sent to the front
+// add-item server.
+func EncodeAddItemRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*front.AddItemPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("front", "add-item", "*front.AddItemPayload", v)
+		}
+		body := NewAddItemRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("front", "add-item", err)
+		}
+		return nil
+	}
+}
+
+// DecodeAddItemResponse returns a decoder for responses returned by the front
+// add-item endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+// DecodeAddItemResponse may return the following errors:
+//   - "name_taken" (type *front.NameTaken): http.StatusConflict
+//   - "not_found" (type *front.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeAddItemResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusCreated:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "add-item", err)
+			}
+			return body, nil
+		case http.StatusConflict:
+			var (
+				body AddItemNameTakenResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "add-item", err)
+			}
+			err = ValidateAddItemNameTakenResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("front", "add-item", err)
+			}
+			return nil, NewAddItemNameTaken(&body)
+		case http.StatusNotFound:
+			var (
+				body AddItemNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "add-item", err)
+			}
+			err = ValidateAddItemNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("front", "add-item", err)
+			}
+			return nil, NewAddItemNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("front", "add-item", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildRemoveItemRequest instantiates a HTTP request object with method and
+// path set to call the "front" service "remove-item" endpoint
+func (c *Client) BuildRemoveItemRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveItemFrontPath()}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("front", "remove-item", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeRemoveItemRequest returns an encoder for requests sent to the front
+// remove-item server.
+func EncodeRemoveItemRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*front.RemoveItemPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("front", "remove-item", "*front.RemoveItemPayload", v)
+		}
+		body := NewRemoveItemRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("front", "remove-item", err)
+		}
+		return nil
+	}
+}
+
+// DecodeRemoveItemResponse returns a decoder for responses returned by the
+// front remove-item endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+// DecodeRemoveItemResponse may return the following errors:
+//   - "not_found" (type *front.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeRemoveItemResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusNoContent:
+			return nil, nil
+		case http.StatusNotFound:
+			var (
+				body RemoveItemNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("front", "remove-item", err)
+			}
+			err = ValidateRemoveItemNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("front", "remove-item", err)
+			}
+			return nil, NewRemoveItemNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("front", "remove-item", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// unmarshalStoredCharacterResponseToFrontviewsStoredCharacterView builds a
+// value of type *frontviews.StoredCharacterView from a value of type
+// *StoredCharacterResponse.
+func unmarshalStoredCharacterResponseToFrontviewsStoredCharacterView(v *StoredCharacterResponse) *frontviews.StoredCharacterView {
+	res := &frontviews.StoredCharacterView{
 		ID:          v.ID,
+		Name:        v.Name,
+		Description: v.Description,
+		Health:      v.Health,
+		Experience:  v.Experience,
+	}
+
+	return res
+}
+
+// marshalFrontCharacterToCharacterRequestBody builds a value of type
+// *CharacterRequestBody from a value of type *front.Character.
+func marshalFrontCharacterToCharacterRequestBody(v *front.Character) *CharacterRequestBody {
+	res := &CharacterRequestBody{
+		Name:        v.Name,
+		Description: v.Description,
+		Health:      v.Health,
+		Experience:  v.Experience,
+	}
+
+	return res
+}
+
+// marshalCharacterRequestBodyToFrontCharacter builds a value of type
+// *front.Character from a value of type *CharacterRequestBody.
+func marshalCharacterRequestBodyToFrontCharacter(v *CharacterRequestBody) *front.Character {
+	res := &front.Character{
+		Name:        v.Name,
+		Description: v.Description,
+		Health:      v.Health,
+		Experience:  v.Experience,
+	}
+
+	return res
+}
+
+// marshalFrontItemToItemRequestBody builds a value of type *ItemRequestBody
+// from a value of type *front.Item.
+func marshalFrontItemToItemRequestBody(v *front.Item) *ItemRequestBody {
+	res := &ItemRequestBody{
+		Name:        v.Name,
+		Description: v.Description,
+		Damage:      v.Damage,
+		Healing:     v.Healing,
+		Protection:  v.Protection,
+	}
+
+	return res
+}
+
+// marshalItemRequestBodyToFrontItem builds a value of type *front.Item from a
+// value of type *ItemRequestBody.
+func marshalItemRequestBodyToFrontItem(v *ItemRequestBody) *front.Item {
+	res := &front.Item{
 		Name:        v.Name,
 		Description: v.Description,
 		Damage:      v.Damage,

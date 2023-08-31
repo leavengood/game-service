@@ -3,11 +3,8 @@ package main
 import (
 	"context"
 	character "game-service/gen/character"
-	front "game-service/gen/front"
 	characterpb "game-service/gen/grpc/character/pb"
 	charactersvr "game-service/gen/grpc/character/server"
-	frontpb "game-service/gen/grpc/front/pb"
-	frontsvr "game-service/gen/grpc/front/server"
 	inventorypb "game-service/gen/grpc/inventory/pb"
 	inventorysvr "game-service/gen/grpc/inventory/server"
 	itempb "game-service/gen/grpc/item/pb"
@@ -27,7 +24,7 @@ import (
 
 // handleGRPCServer starts configures and starts a gRPC server on the given
 // URL. It shuts down the server if any error is received in the error channel.
-func handleGRPCServer(ctx context.Context, u *url.URL, characterEndpoints *character.Endpoints, inventoryEndpoints *inventory.Endpoints, frontEndpoints *front.Endpoints, itemEndpoints *item.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
+func handleGRPCServer(ctx context.Context, u *url.URL, characterEndpoints *character.Endpoints, inventoryEndpoints *inventory.Endpoints, itemEndpoints *item.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
 
 	// Setup goa log adapter.
 	var (
@@ -44,13 +41,11 @@ func handleGRPCServer(ctx context.Context, u *url.URL, characterEndpoints *chara
 	var (
 		characterServer *charactersvr.Server
 		inventoryServer *inventorysvr.Server
-		frontServer     *frontsvr.Server
 		itemServer      *itemsvr.Server
 	)
 	{
 		characterServer = charactersvr.New(characterEndpoints, nil)
 		inventoryServer = inventorysvr.New(inventoryEndpoints, nil)
-		frontServer = frontsvr.New(frontEndpoints, nil)
 		itemServer = itemsvr.New(itemEndpoints, nil)
 	}
 
@@ -65,7 +60,6 @@ func handleGRPCServer(ctx context.Context, u *url.URL, characterEndpoints *chara
 	// Register the servers.
 	characterpb.RegisterCharacterServer(srv, characterServer)
 	inventorypb.RegisterInventoryServer(srv, inventoryServer)
-	frontpb.RegisterFrontServer(srv, frontServer)
 	itempb.RegisterItemServer(srv, itemServer)
 
 	for svc, info := range srv.GetServiceInfo() {

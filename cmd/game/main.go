@@ -49,7 +49,7 @@ func main() {
 	{
 		characterSvc = game.NewCharacter(logger)
 		inventorySvc = game.NewInventory(logger)
-		frontSvc = game.NewFront(logger)
+		frontSvc = game.NewFront(logger, "localhost:8080")
 		itemSvc = game.NewItem(logger)
 	}
 
@@ -131,7 +131,7 @@ func main() {
 			} else if u.Port() == "" {
 				u.Host = net.JoinHostPort(u.Host, "8080")
 			}
-			handleGRPCServer(ctx, u, characterEndpoints, inventoryEndpoints, frontEndpoints, itemEndpoints, &wg, errc, logger, *dbgF)
+			handleGRPCServer(ctx, u, characterEndpoints, inventoryEndpoints, itemEndpoints, &wg, errc, logger, *dbgF)
 		}
 
 	default:
